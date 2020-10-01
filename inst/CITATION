@@ -1,0 +1,13 @@
+citHeader("To cite synthvisium in publications use:")
+
+citEntry(entry = "Article",
+  title        = "XXX",
+  author       = personList(as.person("Robin Browaeys"), as.person("Yvan Saeys")),
+  journal      = "XXX",
+  year         = "2021",
+  url          = {"https://www.nature.com/articles/s41592-019-0667-5"},
+
+  textVersion  =
+  paste("Robin Browaeys, ..., Yvan Saeys (2021)",
+        "XXX")
+)

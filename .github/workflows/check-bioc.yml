@@ -207,6 +207,7 @@ jobs:
           # BiocManager::install("limma")
           # remotes::install_github("satijalab/seurat", ref = "spatial")
           # remotes::install_github("saeyslab/nichenetr")
+          install.packages("igraph", type = "binary")
 
         shell: Rscript {0}
 
@@ -386,6 +387,8 @@ jobs:
           # BiocManager::install("limma")
           # remotes::install_github("satijalab/seurat", ref = "spatial")
           # remotes::install_github("saeyslab/nichenetr")
+          install.packages("igraph", type = "binary")
+
         shell: Rscript {0}
 
       - name: Session info

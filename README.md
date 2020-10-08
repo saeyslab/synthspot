@@ -15,47 +15,83 @@ Status](https://codecov.io/gh/browaeysrobin/synthvisium/branch/master/graph/badg
 <!-- badges: end -->
 
 **synthvisium: an R package to generate synthetic Visium-like spot data
-based by generating artificial mixtures of cells from input scRNAseq
-data.** The goal of this package is to give users the possibilities to
-generate different types of synthetic data for evaluation of spot
-deconvolution and label transfer methods.
+by generating artificial mixtures of cells from input scRNAseq data.**
+The goal of this package is to give users the possibilities to generate
+different types of synthetic data for evaluation of spot deconvolution
+and label transfer methods. Since these synthetic datasets just consist
+of spots/mixtures of cells without modeling spatial aspects, they cannot
+be used to evaluate methods that require a spatial component in the
+data.
 
-Main functionalities of synthvisium
------------------------------------
+How does this synthetic data generator work?
+--------------------------------------------
 
-Add later.
+The goal of this simulator is to create a dataset that provide gene
+expression information for ‘mini-bulk’ spots, similar to data generated
+by the classic Spatial Transcriptomics and 10X Visium technology.
+Because current spatial transcriptomics profile gene expression of spots
+that typically contain between 2 and 10 cells, this simulator will
+generate synthetic spot data by considering the gene expression of one
+spot as a mixture of the expression of n cells (n between 2 and 10).
+
+So to generate one spot, the simulator will sample n cells from input
+scRNAseq data, sum their counts gene by gene, and downsample to a
+‘standard Visium’ number of counts (because by summing counts of
+multiple cells without downsampling, we would otherwise get
+unrealistically high number of counts). n is currently a randomly picked
+number between 2 an 10 (randomly sampled based on uniform distribution).
+The target number of counts for downsampling is currently picked from a
+normal distribution with mean and standard deviation based on real
+Visium datasets (these values can be changed by the user).
+
+Importantly, the sampling of cells from input scRNAseq data depends on
+***a priori*** defined cell type frequencies. This means that cells from
+scRNAseq-derived cell types with higher defined frequencies will be more
+likely to be picked than cells from less frequent cell types. To make
+more realistic datasets, the simulator allows for generating different
+‘regions’, which are groups of spots with similar cell type frequencies.
+By assigning different cell type frequencies to different ‘regions’,
+label transfer methods to predict Visium-based region annotations of
+single-cells can be applied and evaluated. In this simulator, several
+‘dataset types’ with each different ways to define the prior cell type
+frequencies are build in to represent different possible tissue types.
+Details about these different types are given in the vignette.
+
+Current limitations of this generator are that potential technical
+differences between scRNAseq and Visium data are not yet incorporated
+and that a region is just a group of spots and that a spatial
+information layer is lacking.
 
 Installation of synthvisium
 ---------------------------
 
-Installation typically takes a few minutes, depending on the number of
-dependencies that has already been installed on your pc.
+Installation depends on the number of dependencies that has already been
+installed on your pc, but should not take much time.
 
 You can install synthvisium (and required dependencies) from github
 with:
 
     # install.packages("devtools")
-    devtools::install_github("satijalab/seurat", ref = "spatial")
-    devtools::install_github("saeyslab/nichenetr")
+    # install.packages("igraph", type = "binary") ### on Windows only, if problem with installing igraph
     devtools::install_github("browaeysrobin/synthvisium")
 
-synthvisium was tested on both Windows and Linux (most recently tested R
-version: R 4.0.2)
+synthvisium has been tested on Windows, Mac and Linux (most recently
+tested R version: R 4.0.2)
 
 Learning to use synthvisium
 ---------------------------
 
-In the following vignettes, you can find how to perform spatially aware
-cell-cell communication inference based on integration of 10X Visium and
-scRNAseq data:
+In the following vignette, you can learn how to generate the synthetic
+data by synthvisium:
 
--   [Basic computational analysis from spatial transcriptomics data:
-    spatial regions approach](vignettes/basic_analysis.md):
-    `vignette("basic_analysis", package="synthvisium")`
+-   [Generating Visium-like spot data](vignettes/generate_syn_data.md):
+    `vignette("generate_syn_data", package="synthvisium")`
 
-References
-----------
+In the next vignette, you can find a short demonstration of a basic
+analysis you can do on this synthetic Visium data. We also show how to
+do the label transfer and compare gold standard labels with predicted
+labels:
 
-Browaeys, R., Saelens, W. & Saeys, Y. NicheNet: modeling intercellular
-communication by linking ligands to target genes. Nat Methods (2019)
-<a href="doi:10.1038/s41592-019-0667-5" class="uri">doi:10.1038/s41592-019-0667-5</a>
+-   [Analyzing synthetic Visium-like spot data for evaluating label
+    transfer methods](vignettes/analyze_syn_data.md):
+    `vignette("analyze_syn_data", package="synthvisium")`

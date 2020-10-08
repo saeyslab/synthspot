@@ -346,8 +346,8 @@ jobs:
         if: runner.os == 'Windows'
         run: |
           ## Edit below if you have any Windows system dependencies
-          Rscript -e "install.packages("igraph", type = "binary")"
-        shell: Rscript {0}
+          Rscript -e "install.packages('igraph', type = 'binary',repos = 'http://cran.us.r-project.org')"
+          ## install.packages('igraph', type = 'binary')
 
       - name: Install BiocManager
         run: |

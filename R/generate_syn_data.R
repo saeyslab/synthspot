@@ -538,7 +538,7 @@ make_region_celltype_assignment = function(seurat_obj, clust_var, n_regions, dat
   }
 
   # for in next function, we will need to have the variable in which region is stored if generating 'real synthetic data'
-  properties_df = properties_df %>% dplyr::inner_join(tibble::tibble(real_artificial = c("real","artificial"), real_region_var = c(region_var, NA)))
+  properties_df = properties_df %>% dplyr::inner_join(tibble::tibble(real_artificial = c("real","artificial"), real_region_var = c(region_var, NA)), by = "real_artificial")
 
   # Define the number of spots that needs to be generated per region (random number between n_spots_min and n_spots_max)
   n_spots_list = regions %>% lapply(function(region_oi){
@@ -648,12 +648,16 @@ region_assignment_to_syn_data = function(region_assignment_list, seurat_obj, clu
     region_assignments_mock = list(region_assignments_mock_region)
     names(region_assignments_mock) = mock_regions
 
-    seurat_obj_mock = seurat_obj
-    rownames(seurat_obj_mock[["RNA"]]@counts) = rownames(seurat_obj_mock[["RNA"]]@counts) %>% sample(size = nrow(seurat_obj_mock[["RNA"]]@counts), replace = F) %>% unique()
-
-    synthetic_regions_mock = mock_regions %>% lapply(generate_spots, region_assignments_mock, seurat_obj_mock, visium_mean, visium_sd, real_dataset)
+    synthetic_regions_mock = mock_regions %>% lapply(generate_spots, region_assignments_mock, seurat_obj, visium_mean, visium_sd, real_dataset = FALSE)
     # synthetic_regions_mock[[1]]$spot_composition %>% select(-name, -region) %>% apply(2,sum)
-    # check where this mistake might be that L2/3.IT is not picked to sample... (is it due to the slash?)
+
+    # now shuffle the gene names at random
+    mock_genes = rownames(synthetic_regions_mock[[1]]$counts)
+    shuffled_mock_genes = sample(mock_genes, size = length(mock_genes), replace = F)
+    rownames(synthetic_regions_mock[[1]]$counts) = shuffled_mock_genes
+    # but keep the original order
+    synthetic_regions_mock[[1]]$counts = synthetic_regions_mock[[1]]$counts %>% .[mock_genes,]
+
     mock_spot_composition = synthetic_regions_mock[[1]]$spot_composition
     mock_spot_composition[mock_spot_composition > 0] = 0
     mock_spot_composition$name = synthetic_regions_mock[[1]]$spot_composition$name

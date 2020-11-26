@@ -4,7 +4,7 @@
 \alias{generate_synthetic_visium}
 \title{Generate synthetic Visium/ST data from input scRNAseq data.}
 \usage{
-generate_synthetic_visium(seurat_obj, dataset_type, clust_var, n_regions, region_var = NULL, dataset_id = "1", n_spots_min = 50, n_spots_max = 500, visium_mean = 20000, visium_sd = 7000)
+generate_synthetic_visium(seurat_obj, dataset_type, clust_var, n_regions, region_var = NULL, dataset_id = "1", n_spots_min = 50, n_spots_max = 500, visium_mean = 20000, visium_sd = 7000, add_mock_region = FALSE)
 }
 \arguments{
 \item{seurat_obj}{The input scRNAseq data stored as Seurat object.}
@@ -39,6 +39,8 @@ generate_synthetic_visium(seurat_obj, dataset_type, clust_var, n_regions, region
 \item{visium_mean}{The mean of the normal distribution that will be used to pick the target number of counts for downsample.}
 
 \item{visium_sd}{The standard deviation of the normal distribution that will be used to pick the target number of counts for downsample.}
+
+\item{add_mock_region}{If you want to make a "mock region" in addition to the other regions, set this parameter to TRUE. Mock region is recommended when the synthetic data will be used to evaluate spatial/region annotation of cells, not when evaluating deconvolution tools. Default: FALSE.}
 }
 \value{
 list with five sublists: \cr

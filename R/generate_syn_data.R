@@ -562,12 +562,13 @@ make_region_celltype_assignment = function(seurat_obj, clust_var, n_regions, dat
 #' Cells from the input scRNAseq data will be sampled based on the provided cell type frequencies per region (such that each region has a different cellular composition), and their counts will be summed.
 #' After summation of the counts, the counts will be downsampled to get a total number of counts per spot that is typical for a Visium dataset. This target number of counts will be determined by sampling from a Normal distribution with mean and SD provided by the user.
 #' @usage
-#' region_assignment_to_syn_data(region_assignment_list, seurat_obj, clust_var, visium_mean = 20000, visium_sd = 7000)
+#' region_assignment_to_syn_data(region_assignment_list, seurat_obj, clust_var, visium_mean = 20000, visium_sd = 7000, add_mock_region = FALSE)
 #'
 #' @inheritParams make_region_celltype_assignment
 #' @param region_assignment_list Output of the function `make_region_celltype_assignment`
 #' @param visium_mean The mean of the normal distribution that will be used to pick the target number of counts for downsample.
 #' @param visium_sd The standard deviation of the normal distribution that will be used to pick the target number of counts for downsample.
+#' @param add_mock_region If you want to make a "mock region" in addition to the other regions, set this parameter to TRUE. Mock region is recommended when the synthetic data will be used to evaluate spatial/region annotation of cells, not when evaluating deconvolution tools. Default: FALSE.
 #'
 #'
 #' @return list with five sublists: \cr
@@ -589,7 +590,7 @@ make_region_celltype_assignment = function(seurat_obj, clust_var, n_regions, dat
 #'
 #' @export
 #'
-region_assignment_to_syn_data = function(region_assignment_list, seurat_obj, clust_var, visium_mean = 20000, visium_sd = 7000){
+region_assignment_to_syn_data = function(region_assignment_list, seurat_obj, clust_var, visium_mean = 20000, visium_sd = 7000, add_mock_region = FALSE){
 
   requireNamespace("dplyr")
   requireNamespace("Seurat")
@@ -635,6 +636,35 @@ region_assignment_to_syn_data = function(region_assignment_list, seurat_obj, clu
 
   regions = names(region_assignments)
   synthetic_regions = regions %>% lapply(generate_spots, region_assignments, seurat_obj, visium_mean, visium_sd, real_dataset)
+
+  if(add_mock_region == TRUE){   # possible to add the mock region here in the synthetic_regions thing
+    mock_regions = "mockregion"
+    n_spots_mock = region_assignments %>% purrr::map("n_spots") %>% unlist() %>% min()
+    celltypes = region_assignments %>% purrr::map("celltype_freq") %>% .[[1]] %>% names()
+    celltype_freq_mock = rep(1/length(celltypes), times = length(celltypes))
+    names(celltype_freq_mock) = celltypes
+    region_assignments_mock_region = list(n_spots = n_spots_mock,
+                                          celltype_freq = celltype_freq_mock)
+    region_assignments_mock = list(region_assignments_mock_region)
+    names(region_assignments_mock) = mock_regions
+
+    seurat_obj_mock = seurat_obj
+    rownames(seurat_obj_mock[["RNA"]]@counts) = rownames(seurat_obj_mock[["RNA"]]@counts) %>% sample(size = nrow(seurat_obj_mock[["RNA"]]@counts), replace = F) %>% unique()
+
+    synthetic_regions_mock = mock_regions %>% lapply(generate_spots, region_assignments_mock, seurat_obj_mock, visium_mean, visium_sd, real_dataset)
+    # synthetic_regions_mock[[1]]$spot_composition %>% select(-name, -region) %>% apply(2,sum)
+    # check where this mistake might be that L2/3.IT is not picked to sample... (is it due to the slash?)
+    mock_spot_composition = synthetic_regions_mock[[1]]$spot_composition
+    mock_spot_composition[mock_spot_composition > 0] = 0
+    mock_spot_composition$name = synthetic_regions_mock[[1]]$spot_composition$name
+    mock_spot_composition$region =  synthetic_regions_mock[[1]]$spot_composition$region
+    synthetic_regions_mock[[1]]$spot_composition = mock_spot_composition
+
+    synthetic_regions = c(synthetic_regions, synthetic_regions_mock)
+
+    gold_standard_priorregion_mock = tibble(prior_region = mock_regions, celltype = celltypes, freq = 0, present = FALSE)
+    gold_standard_priorregion = gold_standard_priorregion %>% bind_rows(gold_standard_priorregion_mock)
+  }
 
   syn_count_data = synthetic_regions %>% purrr::map("counts") %>% do.call("cbind",.)
   syn_spot_composition = synthetic_regions %>% purrr::map("spot_composition") %>% dplyr::bind_rows()
@@ -799,6 +829,7 @@ generate_spots = function(region_oi, region_assignments, seurat_obj, visium_mean
   # change column order so that its progressive
   lev_mod = gsub("[\\+|\\ ]", ".", levels(seurat_obj$seurat_clusters_oi))
   all_cn = c(lev_mod,'name','region')
+  all_cn = make.names(all_cn) # needed for when not all cell type names are suitable column names according to R
   if( sum(all_cn %in% colnames(ds_spots_metadata)) == (nlevels(seurat_obj$seurat_clusters_oi)+2) ){
     ds_spots_metadata = ds_spots_metadata[,all_cn]
   } else {
@@ -819,7 +850,7 @@ generate_spots = function(region_oi, region_assignments, seurat_obj, visium_mean
 #' If your scRNAseq data object already provides information about the region/location a cell was sampled from, you could use this information as well to generate synthetic Visium data that will only pool cells together if they originate from the same region. \cr
 #'
 #' @usage
-#' generate_synthetic_visium(seurat_obj, dataset_type, clust_var, n_regions, region_var = NULL, dataset_id = "1", n_spots_min = 50, n_spots_max = 500, visium_mean = 20000, visium_sd = 7000)
+#' generate_synthetic_visium(seurat_obj, dataset_type, clust_var, n_regions, region_var = NULL, dataset_id = "1", n_spots_min = 50, n_spots_max = 500, visium_mean = 20000, visium_sd = 7000, add_mock_region = FALSE)
 #'
 #' @inheritParams make_region_celltype_assignment
 #' @inheritParams region_assignment_to_syn_data
@@ -842,7 +873,7 @@ generate_spots = function(region_oi, region_assignments, seurat_obj, visium_mean
 #'
 #' @export
 #'
-generate_synthetic_visium = function(seurat_obj, dataset_type, clust_var, n_regions, region_var = NULL, dataset_id = "1", n_spots_min = 50, n_spots_max = 500, visium_mean = 20000, visium_sd = 7000){
+generate_synthetic_visium = function(seurat_obj, dataset_type, clust_var, n_regions, region_var = NULL, dataset_id = "1", n_spots_min = 50, n_spots_max = 500, visium_mean = 20000, visium_sd = 7000, add_mock_region = FALSE){
 
   requireNamespace("dplyr")
   requireNamespace("Seurat")
@@ -850,7 +881,7 @@ generate_synthetic_visium = function(seurat_obj, dataset_type, clust_var, n_regi
   # input checks are implemented in the functions that are used here under the hood.
 
   region_assignment_list = make_region_celltype_assignment(seurat_obj = seurat_obj, clust_var = clust_var, n_regions = n_regions, dataset_type = dataset_type, region_var = region_var, dataset_id = dataset_id, n_spots_min = n_spots_min, n_spots_max = n_spots_max)
-  synthetic_visium_data = region_assignment_to_syn_data(region_assignment_list = region_assignment_list, seurat_obj = seurat_obj, clust_var = clust_var, visium_mean = visium_mean, visium_sd = visium_sd)
+  synthetic_visium_data = region_assignment_to_syn_data(region_assignment_list = region_assignment_list, seurat_obj = seurat_obj, clust_var = clust_var, visium_mean = visium_mean, visium_sd = visium_sd, add_mock_region = add_mock_region)
 
   return(synthetic_visium_data)
 

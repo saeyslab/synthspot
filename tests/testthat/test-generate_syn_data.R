@@ -71,6 +71,10 @@ test_that("generating synthetic data works for each 'tissue type' of 'artificial
                                                     n_spots_min = 5, n_spots_max = 20, visium_mean = 20000, visium_sd = 5000)
   expect_type(object = synthetic_visium_data, type = "list")
 
+  synthetic_visium_data = generate_synthetic_visium(seurat_obj = seurat_obj, dataset_type = "artificial_uniform_distinct", clust_var = "subclass", region_var = NULL , n_regions = 3,
+                                                    n_spots_min = 5, n_spots_max = 20, visium_mean = 20000, visium_sd = 5000, add_mock_region = TRUE)
+  expect_type(object = synthetic_visium_data, type = "list")
+
 
 
 

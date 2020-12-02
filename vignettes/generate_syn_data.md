@@ -20,6 +20,8 @@ library(synthvisium)
 library(dplyr)
 ```
 
+# Generating synthetic Visium-like spot data from input scRNAseq data
+
 ## Generating Visium-like spot data from toy input scRNAseq data.
 
 #### Explore input scRNAseq data
@@ -61,11 +63,11 @@ sublist (genes in rows, spots in columns):
 ``` r
 synthetic_visium_data$counts %>% as.matrix() %>% .[1:5,1:5]
 ##      priorregion1_spot_1 priorregion1_spot_2 priorregion1_spot_3 priorregion1_spot_4 priorregion1_spot_5
-## Vip                    0                   4                   2                   1                4242
-## Sst                    1                   0                   0                   1                   1
-## Npy                 1908                3339                9498                3696                2574
-## Tac2                   0                 416                   0                  83                1063
-## Crh                    0                   0                 588                   0                 170
+## Vip                 5287               11155                6689                4996                4294
+## Sst                    0                   0                   0                   6                   0
+## Npy                    2                   0                   0                   0                   1
+## Tac2                   0                1822                 815                   0                 154
+## Crh                   11                 920                1300                  83                 163
 ```
 
 Then, you can also see the cell type composition (absolute numbers of
@@ -75,29 +77,29 @@ regions of the spot in the `name` and `region` columns):
 
 ``` r
 synthetic_visium_data$spot_composition %>% .[1:10,]
-##    L2/3.IT L4 L5.IT L5.PT L6.CT L6.IT L6b Lamp5 NP Pvalb Sst Vip                name       region
-## 1        0  0     0     0     0     0   0     7  0     0   0   0 priorregion1_spot_1 priorregion1
-## 2        0  0     0     0     0     0   0     6  0     0   0   0 priorregion1_spot_2 priorregion1
-## 3        0  0     0     0     0     0   0     4  0     0   0   1 priorregion1_spot_3 priorregion1
-## 4        0  0     0     0     0     0   0     6  0     0   0   0 priorregion1_spot_4 priorregion1
-## 5        0  0     0     0     0     0   0     4  0     0   0   1 priorregion1_spot_5 priorregion1
-## 6        0  0     0     0     0     0   0     4  0     0   0   1 priorregion1_spot_6 priorregion1
-## 7        0  0     0     0     0     0   0     7  0     0   0   0 priorregion1_spot_7 priorregion1
-## 8        0  0     2     0     0     0   0     0  0     3   0   0 priorregion2_spot_1 priorregion2
-## 9        0  0     0     0     0     0   0     0  0     3   0   0 priorregion2_spot_2 priorregion2
-## 10       0  0     3     0     0     0   0     0  0     5   0   0 priorregion2_spot_3 priorregion2
+##    L2.3.IT L4 L5.IT L5.PT L6.CT L6.IT L6b Lamp5 NP Pvalb Sst Vip                name       region
+## 1        0  0     0     0     0     0   0     0  7     0   0   1 priorregion1_spot_1 priorregion1
+## 2        0  0     0     0     0     0   0     0  1     0   0   1 priorregion1_spot_2 priorregion1
+## 3        0  0     0     0     0     0   0     0  7     0   0   1 priorregion1_spot_3 priorregion1
+## 4        0  0     0     0     0     0   0     0  3     0   0   1 priorregion1_spot_4 priorregion1
+## 5        0  0     0     0     0     0   0     0  6     0   0   3 priorregion1_spot_5 priorregion1
+## 6        0  0     0     0     0     0   0     0  2     0   0   0 priorregion1_spot_6 priorregion1
+## 7        0  0     0     0     0     9   0     0  0     0   0   0 priorregion2_spot_1 priorregion2
+## 8        0  0     0     0     0     8   0     0  0     0   0   0 priorregion2_spot_2 priorregion2
+## 9        0  0     0     0     0     8   0     0  0     0   0   0 priorregion2_spot_3 priorregion2
+## 10       0  0     0     0     0     8   0     0  0     0   0   0 priorregion2_spot_4 priorregion2
 synthetic_visium_data$relative_spot_composition %>% .[1:10,]
-##    L2/3.IT L4 L5.IT L5.PT L6.CT L6.IT L6b Lamp5 NP Pvalb Sst Vip                name       region
-## 1        0  0 0.000     0     0     0   0   1.0  0 0.000   0 0.0 priorregion1_spot_1 priorregion1
-## 2        0  0 0.000     0     0     0   0   1.0  0 0.000   0 0.0 priorregion1_spot_2 priorregion1
-## 3        0  0 0.000     0     0     0   0   0.8  0 0.000   0 0.2 priorregion1_spot_3 priorregion1
-## 4        0  0 0.000     0     0     0   0   1.0  0 0.000   0 0.0 priorregion1_spot_4 priorregion1
-## 5        0  0 0.000     0     0     0   0   0.8  0 0.000   0 0.2 priorregion1_spot_5 priorregion1
-## 6        0  0 0.000     0     0     0   0   0.8  0 0.000   0 0.2 priorregion1_spot_6 priorregion1
-## 7        0  0 0.000     0     0     0   0   1.0  0 0.000   0 0.0 priorregion1_spot_7 priorregion1
-## 8        0  0 0.400     0     0     0   0   0.0  0 0.600   0 0.0 priorregion2_spot_1 priorregion2
-## 9        0  0 0.000     0     0     0   0   0.0  0 1.000   0 0.0 priorregion2_spot_2 priorregion2
-## 10       0  0 0.375     0     0     0   0   0.0  0 0.625   0 0.0 priorregion2_spot_3 priorregion2
+##    L2.3.IT L4 L5.IT L5.PT L6.CT L6.IT L6b Lamp5        NP Pvalb Sst       Vip                name       region
+## 1        0  0     0     0     0     0   0     0 0.8750000     0   0 0.1250000 priorregion1_spot_1 priorregion1
+## 2        0  0     0     0     0     0   0     0 0.5000000     0   0 0.5000000 priorregion1_spot_2 priorregion1
+## 3        0  0     0     0     0     0   0     0 0.8750000     0   0 0.1250000 priorregion1_spot_3 priorregion1
+## 4        0  0     0     0     0     0   0     0 0.7500000     0   0 0.2500000 priorregion1_spot_4 priorregion1
+## 5        0  0     0     0     0     0   0     0 0.6666667     0   0 0.3333333 priorregion1_spot_5 priorregion1
+## 6        0  0     0     0     0     0   0     0 1.0000000     0   0 0.0000000 priorregion1_spot_6 priorregion1
+## 7        0  0     0     0     0     1   0     0 0.0000000     0   0 0.0000000 priorregion2_spot_1 priorregion2
+## 8        0  0     0     0     0     1   0     0 0.0000000     0   0 0.0000000 priorregion2_spot_2 priorregion2
+## 9        0  0     0     0     0     1   0     0 0.0000000     0   0 0.0000000 priorregion2_spot_3 priorregion2
+## 10       0  0     0     0     0     1   0     0 0.0000000     0   0 0.0000000 priorregion2_spot_4 priorregion2
 ```
 
 If you want to see which cell type is present in which region, and with
@@ -109,12 +111,12 @@ synthetic_visium_data$gold_standard_priorregion %>% head()
 ## # A tibble: 6 x 4
 ##   prior_region celltype  freq present
 ##   <chr>        <chr>    <dbl> <lgl>  
-## 1 priorregion1 Vip        0.1 TRUE   
-## 2 priorregion1 Lamp5      0.9 TRUE   
-## 3 priorregion1 Sst        0   FALSE  
-## 4 priorregion1 L4         0   FALSE  
-## 5 priorregion1 L5 IT      0   FALSE  
-## 6 priorregion1 L6 IT      0   FALSE
+## 1 priorregion1 Vip      0.143 TRUE   
+## 2 priorregion1 NP       0.857 TRUE   
+## 3 priorregion1 Sst      0     FALSE  
+## 4 priorregion1 L4       0     FALSE  
+## 5 priorregion1 L5 IT    0     FALSE  
+## 6 priorregion1 L6 IT    0     FALSE
 ```
 
 We also provide a data frame with properties of this specific dataset.
@@ -123,10 +125,27 @@ properties on performance.
 
 ``` r
 synthetic_visium_data$dataset_properties 
-## # A tibble: 1 x 8
-##   dataset_id                   dataset_type                real_artificial uniform_diverse distinct_overlap dominant_celltype missing_celltype real_region_var
-##   <chr>                        <chr>                       <chr>           <chr>           <chr>            <lgl>             <lgl>            <lgl>          
-## 1 artificial_diverse_distinct1 artificial_diverse_distinct artificial      diverse         distinct         FALSE             FALSE            NA
+## # A tibble: 1 x 10
+##   dataset_id                   dataset_type                real_artificial uniform_diverse distinct_overlap dominant_celltype missing_celltype rare_celltype missing_celltype_sc real_region_var
+##   <chr>                        <chr>                       <chr>           <chr>           <chr>            <lgl>             <lgl>            <lgl>         <lgl>               <lgl>          
+## 1 artificial_diverse_distinct1 artificial_diverse_distinct artificial      diverse         distinct         FALSE             FALSE            FALSE         NA                  NA
+```
+
+## Generating Visium-like spot data from toy input scRNAseq data, with inclusion of a ‘mock region’.
+
+Because it could be possible that a cell type will belong to all
+regions, we will make the synthetic data in such a way that we have a
+‘mock region’ as well - no cell type should be predicted to belong to
+this region. Adding a mock region is thus recommended when the synthetic
+data will be used to evaluate spatial/region annotation of cells, not
+when evaluating deconvolution tools. The mock region is generated
+similar as the real regions, but the input cell type frequencies are the
+same for each cell type, and after generation of the counts, the gene
+names are shuffled such that cellular identities in this mock region are
+lost.
+
+``` r
+synthetic_visium_data = generate_synthetic_visium(seurat_obj = seurat_obj, dataset_type = "artificial_diverse_distinct", clust_var = "subclass", n_regions = 5, n_spots_min = 5, n_spots_max = 20, visium_mean = 30000, visium_sd = 8000, add_mock_region = TRUE)
 ```
 
 ## Generating Visium-like spot data from toy input scRNAseq data that contains information of the anatomical regions of cells.
@@ -150,7 +169,7 @@ data (`brain_subregion` column)
 DimPlot(seurat_obj, group.by = "brain_subregion")
 ```
 
-![](generate_syn_data_files/figure-gfm/unnamed-chunk-8-1.png)<!-- -->
+![](generate_syn_data_files/figure-gfm/unnamed-chunk-9-1.png)<!-- -->
 
 As the second example, we will now generate a dataset consisting of
 artificial “L1 - L2/3 - L4 - L5 - L6” regions with each between 5 or 20
@@ -186,19 +205,30 @@ synthetic_visium_data = generate_synthetic_visium(seurat_obj = seurat_obj, datas
                                                     n_spots_min = 50, n_spots_max = 200, visium_mean = 20000, visium_sd = 5000)
 ```
 
+# Using synthetic Visium-like spot data to evaluate performance of Visium-scRNAseq integration workflows
+
 Check the following vignette to find a short demonstration of a basic
 analysis you can do on this synthetic Visium data. We also show how to
-do the label transfer and compare gold standard labels with predicted
-labels. [Analyzing synthetic Visium-like spot data for evaluating label
-transfer methods](analyze_syn_data.md):`vignette("analyze_syn_data",
+do spatial annotation of cells through Seurat label transfer and compare
+gold standard labels with predicted labels. [Analyzing synthetic
+Visium-like spot data for evaluating label transfer
+methods](analyze_syn_data.md):`vignette("analyze_syn_data",
 package="synthvisium")`.
 
-## Information about the different dataset types.
+# Information about the different dataset types.
 
-Currently, there are 13 possible dataset types implemented:
+Currently, there are 17 possible dataset types implemented:
 
 ``` r
-possible_dataset_types = c("real", "real_top1","real_top1_uniform","real_top2_overlap","real_top2_overlap_uniform", "real_missing_celltypes_visium", "artificial_uniform_distinct", "artificial_diverse_distinct",  "artificial_uniform_overlap", "artificial_diverse_overlap", "artificial_dominant_celltype_diverse", "artificial_partially_dominant_celltype_diverse", "artificial_missing_celltypes_visium")
+possible_dataset_types = c("real", "real_top1","real_top1_uniform","real_top2_overlap","real_top2_overlap_uniform", "real_missing_celltypes_visium", "artificial_uniform_distinct", "artificial_diverse_distinct",  "artificial_uniform_overlap", "artificial_diverse_overlap", "artificial_dominant_celltype_diverse", "artificial_partially_dominant_celltype_diverse", "artificial_missing_celltypes_visium",                      "artificial_dominant_rare_celltype_diverse","artificial_regional_rare_celltype_diverse", "artificial_diverse_distinct_missing_celltype_sc","artificial_diverse_overlap_missing_celltype_sc")
+```
+
+The dataset types that are possible for every input scRNAseq dataset and
+that we recommend to use are:
+
+``` r
+recommended_dataset_types = c("artificial_uniform_distinct", "artificial_diverse_distinct",  "artificial_uniform_overlap", "artificial_diverse_overlap", "artificial_dominant_celltype_diverse", "artificial_partially_dominant_celltype_diverse", "artificial_dominant_rare_celltype_diverse","artificial_regional_rare_celltype_diverse")
+#recommended_dataset_types = c("artificial_uniform_distinct", "artificial_diverse_distinct",  "artificial_uniform_overlap", "artificial_diverse_overlap", "artificial_dominant_celltype_diverse", "artificial_partially_dominant_celltype_diverse", "artificial_dominant_rare_celltype_diverse","artificial_regional_rare_celltype_diverse", "artificial_diverse_distinct_missing_celltype_sc","artificial_diverse_overlap_missing_celltype_sc")
 ```
 
 Explanation of each of the types:
@@ -276,3 +306,49 @@ Explanation of each of the types:
     ‘artificial\_diverse\_overlap’ dataset type, but now some random
     input scRNAseq cell types will be left out, and thus not used to
     generate synthetic data.
+  - **artificial\_dominant\_rare\_celltype\_diverse**: the same as
+    ‘artificial\_dominant\_celltype\_diverse’, except that the
+    dominant cell type that is present in all regions is much less
+    abundant than other cell types.
+  - **artificial\_regional\_rare\_celltype\_diverse**: the same as
+    ‘artificial\_dominant\_rare\_celltype\_diverse’, except that the
+    rare cell type is now only present in one region instead of all
+    regions.
+  - **artificial\_diverse\_distinct\_missing\_celltype\_sc**: the same
+    as ‘artificial\_diverse\_distinct’ except that we here include
+    information in the `properties_df` about a random cell type that
+    could be removed from the reference scRNAseq dataset later on during
+    integration and evaluation. This to simulate a case where
+    integration is done with an incomplete reference. Note that you
+    should adapt your integration/evaluation code such that this
+    missing\_celltype can be read by your integration/evaluation
+    function, otherwise this will be the same as
+    ‘artificial\_diverse\_distinct’
+  - **artificial\_diverse\_overlap\_missing\_celltype\_sc**: the same as
+    ‘artificial\_diverse\_distinct\_missing\_celltype\_sc’ but now based
+    on the ‘artificial\_diverse\_overlap’ basic type.
+
+Some important notes on these data types:
+
+The data types indicated with the ‘real\_’ prefix are only possible to
+use for input scRNAseq datasets that have a regional indication of each
+cell. They could be extra difficult if these regional indicators are not
+very distinct (and/or accurate). They also use the real cell type
+frequency (= the number of cells of cell type of interest compared to
+all cells in scRNAseq data)
+
+The data types `real_missing_celltypes_visium` and
+`artificial_missing_celltypes_visium` could be considered less realistic
+since they assume that your visium data will lack cell types that are
+present in your reference of the scRNAseq data. If the visium sample and
+scRNAseq sample are taken from the same tissue, this won’t occur in
+practice.
+
+The data types `artificial_diverse_overlap_missing_celltype_sc` and
+`artificial_diverse_distinct_missing_celltype_sc` can be used to
+simulate the use case with an incomplete reference scRNAseq dataset, but
+only if the integration and evaluation functions are adapted such that
+they can exploit the additional information offered in the
+`properties_df` output for these types. Note that you can simulate the
+use case with an incomplete reference scRNAseq dataset as well in other
+ways.

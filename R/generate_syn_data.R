@@ -27,7 +27,10 @@
 #' "artificial_dominant_celltype_diverse": celltype-prior region assignments are entirely artificial and thus not based on possibly present regional information in the input scRNAseq data. Each artifical prior region could have some overlap in cell type contribution with other regions, and cell type frequencies are different for each cell type in each region. There is one dominant celltype that is present in each region, and is much more abundant than other cell types (5-15x more). \cr \cr
 #' "artificial_partially_dominant_celltype_diverse: celltype-prior region assignments are entirely artificial and thus not based on possibly present regional information in the input scRNAseq data. Each artifical prior region could have some overlap in cell type contribution with other regions, and cell type frequencies are different for each cell type in each region. There is one dominant celltype that is present in all but one regions ("partially dominant"), and is much more abundant than other cell types, except for one region where it is equally abundant. \cr \cr
 #' "artificial_missing_celltypes_visium": the same as the 'artificial_diverse_overlap' dataset type, but now some random input scRNAseq cell types will be left out, and thus not used to generate synthetic data. \cr \cr
-#'
+#' "artificial_dominant_rare_celltype_diverse": the same as 'artificial_dominant_celltype_diverse', except that the dominant cell type that is present in all regions is much less abundant than other cell types.
+#' "artificial_regional_rare_celltype_diverse": the same as 'artificial_dominant_rare_celltype_diverse', except that the rare cell type is now only present in one region instead of all regions.
+#' "artificial_diverse_distinct_missing_celltype_sc": the same as 'artificial_diverse_distinct' except that one random cell type will be removed from the reference scRNAseq dataset at time of integration and evaluation. This to resemble a case where integration is done with an incomplete reference.
+#' "artificial_diverse_overlap_missing_celltype_sc": the same as 'artificial_diverse_overlap' except that one random cell type will be removed from the reference scRNAseq dataset at time of integration and evaluation. This to resemble a case where integration is done with an incomplete reference.
 #' @return A list with three sublists: \cr
 #' region_assignments: gives the number of spots and cell type frequencies that will be used for each prior region \cr
 #' dataset_properties: a tibble describing the dataset properties (based on the dataset_type argument) \cr
@@ -79,7 +82,11 @@ make_region_celltype_assignment = function(seurat_obj, clust_var, n_regions, dat
                             "artificial_diverse_overlap",
                             "artificial_dominant_celltype_diverse",
                             "artificial_partially_dominant_celltype_diverse",
-                            "artificial_missing_celltypes_visium")
+                            "artificial_missing_celltypes_visium",
+                          "artificial_dominant_rare_celltype_diverse",
+                          "artificial_regional_rare_celltype_diverse",
+                          "artificial_diverse_distinct_missing_celltype_sc",
+                          "artificial_diverse_overlap_missing_celltype_sc")
   ){
     stop("the dataset_type argument is not valid. Check the documentation to see the different possibilities.")
   }
@@ -97,7 +104,11 @@ make_region_celltype_assignment = function(seurat_obj, clust_var, n_regions, dat
                             "artificial_diverse_overlap",
                             "artificial_dominant_celltype_diverse",
                             "artificial_partially_dominant_celltype_diverse",
-                            "artificial_missing_celltypes_visium")
+                            "artificial_missing_celltypes_visium",
+                            "artificial_dominant_rare_celltype_diverse",
+                            "artificial_regional_rare_celltype_diverse",
+                            "artificial_diverse_distinct_missing_celltype_sc",
+                            "artificial_diverse_overlap_missing_celltype_sc")
     ){
       stop("the dataset_type argument is not valid. If you dont provide a 'region_var', then you cannot use a dataset type that will use this region_var to define cell type frequencies. Check the documentation to see the different possibilities.")
     }
@@ -146,7 +157,7 @@ make_region_celltype_assignment = function(seurat_obj, clust_var, n_regions, dat
       return(celltype_frequencies)
     })
     names(celltype_frequencies_list) = regions
-    properties_df =  tibble::tibble(dataset_id = paste0(dataset_type, dataset_id),dataset_type = "real", real_artificial = "real", uniform_diverse = "diverse", distinct_overlap = "overlap", dominant_celltype = FALSE, missing_celltype = FALSE)
+    properties_df =  tibble::tibble(dataset_id = paste0(dataset_type, dataset_id),dataset_type = "real", real_artificial = "real", uniform_diverse = "diverse", distinct_overlap = "overlap", dominant_celltype = FALSE, missing_celltype = FALSE, rare_celltype = FALSE, missing_celltype_sc = NA)
 
   }
 
@@ -175,7 +186,7 @@ make_region_celltype_assignment = function(seurat_obj, clust_var, n_regions, dat
       return(celltype_frequencies)
     })
     names(celltype_frequencies_list) = regions
-    properties_df =  tibble::tibble(dataset_id = paste0(dataset_type, dataset_id),dataset_type = "real_top1", real_artificial = "real", uniform_diverse = "diverse", distinct_overlap = "distinct", dominant_celltype = FALSE, missing_celltype = FALSE)
+    properties_df =  tibble::tibble(dataset_id = paste0(dataset_type, dataset_id),dataset_type = "real_top1", real_artificial = "real", uniform_diverse = "diverse", distinct_overlap = "distinct", dominant_celltype = FALSE, missing_celltype = FALSE, rare_celltype = FALSE, missing_celltype_sc = NA)
 
   }
 
@@ -205,7 +216,7 @@ make_region_celltype_assignment = function(seurat_obj, clust_var, n_regions, dat
     })
 
     names(celltype_frequencies_list) = regions
-    properties_df = tibble::tibble(dataset_id = paste0(dataset_type, dataset_id),dataset_type = "real_top1_uniform", real_artificial = "real", uniform_diverse = "uniform", distinct_overlap = "distinct", dominant_celltype = FALSE, missing_celltype = FALSE)
+    properties_df = tibble::tibble(dataset_id = paste0(dataset_type, dataset_id),dataset_type = "real_top1_uniform", real_artificial = "real", uniform_diverse = "uniform", distinct_overlap = "distinct", dominant_celltype = FALSE, missing_celltype = FALSE, rare_celltype = FALSE, missing_celltype_sc = NA)
 
   }
   if(dataset_type == "real_top2_overlap"){ # every region consists of different cell types, but some overlap and replacement is possible - frequency of cell types is according to real data
@@ -233,7 +244,7 @@ make_region_celltype_assignment = function(seurat_obj, clust_var, n_regions, dat
       return(celltype_frequencies)
     })
     names(celltype_frequencies_list) = regions
-    properties_df =  tibble::tibble(dataset_id = paste0(dataset_type, dataset_id),dataset_type = "real_top2_overlap", real_artificial = "real", uniform_diverse = "diverse", distinct_overlap = "overlap", dominant_celltype = FALSE, missing_celltype = FALSE)
+    properties_df =  tibble::tibble(dataset_id = paste0(dataset_type, dataset_id),dataset_type = "real_top2_overlap", real_artificial = "real", uniform_diverse = "diverse", distinct_overlap = "overlap", dominant_celltype = FALSE, missing_celltype = FALSE, rare_celltype = FALSE, missing_celltype_sc = NA)
 
   }
 
@@ -262,7 +273,7 @@ make_region_celltype_assignment = function(seurat_obj, clust_var, n_regions, dat
     })
 
     names(celltype_frequencies_list) = regions
-    properties_df =  tibble::tibble(dataset_id = paste0(dataset_type, dataset_id),dataset_type = "real_top2_overlap_uniform", real_artificial = "real", uniform_diverse = "uniform", distinct_overlap = "overlap", dominant_celltype = FALSE, missing_celltype = FALSE)
+    properties_df =  tibble::tibble(dataset_id = paste0(dataset_type, dataset_id),dataset_type = "real_top2_overlap_uniform", real_artificial = "real", uniform_diverse = "uniform", distinct_overlap = "overlap", dominant_celltype = FALSE, missing_celltype = FALSE, rare_celltype = FALSE, missing_celltype_sc = NA)
 
   }
 
@@ -295,7 +306,7 @@ make_region_celltype_assignment = function(seurat_obj, clust_var, n_regions, dat
       return(celltype_frequencies)
     })
     names(celltype_frequencies_list) = regions
-    properties_df =  tibble::tibble(dataset_id = paste0(dataset_type, dataset_id),dataset_type = "real_missing_celltypes_visium", real_artificial = "real", uniform_diverse = "diverse", distinct_overlap = "overlap", dominant_celltype = FALSE, missing_celltype = TRUE)
+    properties_df =  tibble::tibble(dataset_id = paste0(dataset_type, dataset_id),dataset_type = "real_missing_celltypes_visium", real_artificial = "real", uniform_diverse = "diverse", distinct_overlap = "overlap", dominant_celltype = FALSE, missing_celltype = TRUE, rare_celltype = FALSE, missing_celltype_sc = NA)
 
   }
 
@@ -324,7 +335,7 @@ make_region_celltype_assignment = function(seurat_obj, clust_var, n_regions, dat
 
     })
     names(celltype_frequencies_list) = regions
-    properties_df =  tibble::tibble(dataset_id = paste0(dataset_type, dataset_id),dataset_type = "artificial_uniform_distinct", real_artificial = "artificial", uniform_diverse = "uniform", distinct_overlap = "distinct", dominant_celltype = FALSE, missing_celltype = FALSE)
+    properties_df =  tibble::tibble(dataset_id = paste0(dataset_type, dataset_id),dataset_type = "artificial_uniform_distinct", real_artificial = "artificial", uniform_diverse = "uniform", distinct_overlap = "distinct", dominant_celltype = FALSE, missing_celltype = FALSE, rare_celltype = FALSE, missing_celltype_sc = NA)
 
   }
   if(dataset_type == "artificial_diverse_distinct"){ #  every region consists of different cell types, frequency random
@@ -354,7 +365,7 @@ make_region_celltype_assignment = function(seurat_obj, clust_var, n_regions, dat
 
     })
     names(celltype_frequencies_list) = regions
-    properties_df =  tibble::tibble(dataset_id = paste0(dataset_type, dataset_id),dataset_type = "artificial_diverse_distinct", real_artificial = "artificial", uniform_diverse = "diverse", distinct_overlap = "distinct", dominant_celltype = FALSE, missing_celltype = FALSE)
+    properties_df =  tibble::tibble(dataset_id = paste0(dataset_type, dataset_id),dataset_type = "artificial_diverse_distinct", real_artificial = "artificial", uniform_diverse = "diverse", distinct_overlap = "distinct", dominant_celltype = FALSE, missing_celltype = FALSE, rare_celltype = FALSE, missing_celltype_sc = NA)
 
   }
   if(dataset_type == "artificial_uniform_overlap"){ # every region consists of different cell types, but some overlap and replacement is possible - frequency of cell types will be uniform
@@ -384,7 +395,7 @@ make_region_celltype_assignment = function(seurat_obj, clust_var, n_regions, dat
 
     })
     names(celltype_frequencies_list) = regions
-    properties_df =  tibble::tibble(dataset_id = paste0(dataset_type, dataset_id),dataset_type = "artificial_uniform_overlap", real_artificial = "artificial", uniform_diverse = "uniform", distinct_overlap = "overlap", dominant_celltype = FALSE, missing_celltype = FALSE)
+    properties_df =  tibble::tibble(dataset_id = paste0(dataset_type, dataset_id),dataset_type = "artificial_uniform_overlap", real_artificial = "artificial", uniform_diverse = "uniform", distinct_overlap = "overlap", dominant_celltype = FALSE, missing_celltype = FALSE, rare_celltype = FALSE, missing_celltype_sc = NA)
 
   }
   if(dataset_type == "artificial_diverse_overlap"){ # every region consists of different cell types, but some overlap and replacement is possible - frequency of cell types will be random
@@ -417,7 +428,7 @@ make_region_celltype_assignment = function(seurat_obj, clust_var, n_regions, dat
 
     })
     names(celltype_frequencies_list) = regions
-    properties_df =  tibble::tibble(dataset_id = paste0(dataset_type, dataset_id),dataset_type = "artificial_diverse_overlap", real_artificial = "artificial", uniform_diverse = "diverse", distinct_overlap = "overlap", dominant_celltype = FALSE, missing_celltype = FALSE)
+    properties_df =  tibble::tibble(dataset_id = paste0(dataset_type, dataset_id),dataset_type = "artificial_diverse_overlap", real_artificial = "artificial", uniform_diverse = "diverse", distinct_overlap = "overlap", dominant_celltype = FALSE, missing_celltype = FALSE, rare_celltype = FALSE, missing_celltype_sc = NA)
 
   }
   if (dataset_type == "artificial_dominant_celltype_diverse"){ # one cell type has significant higher frequency over all regions - difference in regions determined by other cell types. Some cell types in more than one region.
@@ -451,7 +462,7 @@ make_region_celltype_assignment = function(seurat_obj, clust_var, n_regions, dat
 
     })
     names(celltype_frequencies_list) = regions
-    properties_df =  tibble::tibble(dataset_id = paste0(dataset_type, dataset_id),dataset_type = "artificial_dominant_celltype_diverse", real_artificial = "artificial", uniform_diverse = "diverse", distinct_overlap = "overlap", dominant_celltype = TRUE, missing_celltype = FALSE)
+    properties_df =  tibble::tibble(dataset_id = paste0(dataset_type, dataset_id),dataset_type = "artificial_dominant_celltype_diverse", real_artificial = "artificial", uniform_diverse = "diverse", distinct_overlap = "overlap", dominant_celltype = TRUE, missing_celltype = FALSE, rare_celltype = FALSE, missing_celltype_sc = NA)
 
   }
   if (dataset_type == "artificial_partially_dominant_celltype_diverse"){ # one cell type has significant higher frequency over all regions - difference in regions determined by other cell types. Some cell types in more than one region.
@@ -491,7 +502,7 @@ make_region_celltype_assignment = function(seurat_obj, clust_var, n_regions, dat
 
     })
     names(celltype_frequencies_list) = regions
-    properties_df =  tibble::tibble(dataset_id = paste0(dataset_type, dataset_id),dataset_type = "artificial_partially_dominant_celltype_diverse", real_artificial = "artificial", uniform_diverse = "diverse", distinct_overlap = "overlap", dominant_celltype = TRUE, missing_celltype = FALSE)
+    properties_df =  tibble::tibble(dataset_id = paste0(dataset_type, dataset_id),dataset_type = "artificial_partially_dominant_celltype_diverse", real_artificial = "artificial", uniform_diverse = "diverse", distinct_overlap = "overlap", dominant_celltype = TRUE, missing_celltype = FALSE, rare_celltype = FALSE, missing_celltype_sc = NA)
 
   }
 
@@ -534,12 +545,154 @@ make_region_celltype_assignment = function(seurat_obj, clust_var, n_regions, dat
 
     })
     names(celltype_frequencies_list) = regions
-    properties_df =  tibble::tibble(dataset_id = paste0(dataset_type, dataset_id),dataset_type = "artificial_missing_celltypes_visium", real_artificial = "artificial", uniform_diverse = "diverse", distinct_overlap = "overlap", dominant_celltype = FALSE, missing_celltype = TRUE)
+    properties_df =  tibble::tibble(dataset_id = paste0(dataset_type, dataset_id),dataset_type = "artificial_missing_celltypes_visium", real_artificial = "artificial", uniform_diverse = "diverse", distinct_overlap = "overlap", dominant_celltype = FALSE, missing_celltype = TRUE, rare_celltype = FALSE, missing_celltype_sc = NA)
+  }
+
+  if (dataset_type == "artificial_diverse_distinct_missing_celltype_sc"){ #  every region consists of different cell types, frequency random
+
+    missing_celltype_sc = sample(celltypes,1)
+
+    # celltype_region_splits =  split( celltypes, sample(n_regions, length(celltypes), repl = TRUE) )
+    celltype_region_samplings = c(sample(seq(n_regions)), sample(seq(n_regions), size = length(celltypes) - length(seq(n_regions)), replace = TRUE))
+    celltype_region_splits =  split(celltypes, celltype_region_samplings)
+
+    celltype_frequencies_list = seq(n_regions) %>% lapply(function(i){
+      region_oi = regions[i]
+      celltypes_oi = celltype_region_splits[[i]]
+
+      other_celltypes = dplyr::setdiff(celltypes, celltypes_oi)
+
+      present_celltypes_numbers = tibble::tibble(seurat_clusters_oi = celltypes_oi, n = sample(10,length(celltypes_oi)))
+      absent_celltypes_numbers = tibble::tibble(seurat_clusters_oi = other_celltypes, n = 0)
+
+      sum_present = sum(present_celltypes_numbers$n)
+
+      celltype_numbers = dplyr::bind_rows(present_celltypes_numbers, absent_celltypes_numbers)
+      celltype_numbers = celltype_numbers %>% dplyr::mutate(freq = n/sum_present)
+
+      celltype_frequencies = celltype_numbers %>% dplyr::pull(freq)
+      names(celltype_frequencies) = celltype_numbers %>% dplyr::pull(seurat_clusters_oi)
+
+      return(celltype_frequencies)
+
+
+    })
+    names(celltype_frequencies_list) = regions
+    properties_df =  tibble::tibble(dataset_id = paste0(dataset_type, dataset_id),dataset_type = "artificial_diverse_distinct_missing_celltype_sc", real_artificial = "artificial", uniform_diverse = "diverse", distinct_overlap = "distinct", dominant_celltype = FALSE, missing_celltype = FALSE, rare_celltype = FALSE, missing_celltype_sc = missing_celltype_sc)
+
+  }
+  if (dataset_type == "artificial_diverse_overlap_missing_celltype_sc"){ # every region consists of different cell types, but some overlap and replacement is possible - frequency of cell types will be random
+
+    missing_celltype_sc = sample(celltypes,1)
+
+    n_overlap_pool = min(length(celltypes),4)
+    overlapping_celltypes = celltypes[sample(seq(length(celltypes)),n_overlap_pool)] %>% as.character() # and out of these 4, 1 will be chosen per region
+    # celltype_region_splits =  split( celltypes, sample(n_regions, length(celltypes), repl = TRUE) )
+    celltype_region_samplings = c(sample(seq(n_regions)), sample(seq(n_regions), size = length(celltypes) - length(seq(n_regions)), replace = TRUE))
+    celltype_region_splits =  split(celltypes, celltype_region_samplings)
+
+    celltype_frequencies_list = seq(n_regions) %>% lapply(function(i){
+      region_oi = regions[i]
+      celltypes_oi = celltype_region_splits[[i]]
+      celltypes_oi = union(celltypes_oi, sample(overlapping_celltypes,1))
+
+      other_celltypes = dplyr::setdiff(celltypes, celltypes_oi)
+
+      present_celltypes_numbers = tibble::tibble(seurat_clusters_oi = celltypes_oi, n = sample(10,length(celltypes_oi)))
+      absent_celltypes_numbers = tibble::tibble(seurat_clusters_oi = other_celltypes, n = 0)
+
+      sum_present = sum(present_celltypes_numbers$n)
+
+      celltype_numbers = dplyr::bind_rows(present_celltypes_numbers, absent_celltypes_numbers)
+      celltype_numbers = celltype_numbers %>% dplyr::mutate(freq = n/sum_present)
+
+      celltype_frequencies = celltype_numbers %>% dplyr::pull(freq)
+      names(celltype_frequencies) = celltype_numbers %>% dplyr::pull(seurat_clusters_oi)
+
+      return(celltype_frequencies)
+
+    })
+    names(celltype_frequencies_list) = regions
+    properties_df =  tibble::tibble(dataset_id = paste0(dataset_type, dataset_id),dataset_type = "artificial_diverse_overlap_missing_celltype_sc", real_artificial = "artificial", uniform_diverse = "diverse", distinct_overlap = "overlap", dominant_celltype = FALSE, missing_celltype = FALSE, rare_celltype = FALSE, missing_celltype_sc = missing_celltype_sc)
+
+  }
+  if (dataset_type == "artificial_dominant_rare_celltype_diverse"){ # one cell type that is present over all regions, but in low frequency - difference in regions determined by other cell types. Some cell types in more than one region.
+
+    dominant_celltype = sample(celltypes,1)
+    #print("dominant cell type is")
+    #print(dominant_celltype)
+
+    # check that the rare cell type is never alone in one region
+    celltype_region_samplings = c(sample(seq(n_regions)), sample(seq(n_regions), size = length(celltypes) -1 - length(seq(n_regions)), replace = TRUE))
+    celltype_region_splits =  split(setdiff(celltypes,dominant_celltype), celltype_region_samplings)
+
+    celltype_frequencies_list = seq(n_regions) %>% lapply(function(i){
+      region_oi = regions[i]
+      celltypes_oi = celltype_region_splits[[i]] %>%dplyr::setdiff(dominant_celltype)
+      other_celltypes = dplyr::setdiff(celltypes, celltypes_oi) %>%dplyr::setdiff(dominant_celltype)
+
+      present_celltypes_numbers = tibble::tibble(seurat_clusters_oi = celltypes_oi, n = sample(seq(75,125),length(celltypes_oi)))
+      absent_celltypes_numbers = tibble::tibble(seurat_clusters_oi = other_celltypes, n = 0)
+      dominant_celltypes_numbers = tibble::tibble(seurat_clusters_oi = dominant_celltype, n = 10)
+
+      sum_present = sum(present_celltypes_numbers$n) %>% sum(dominant_celltypes_numbers$n)
+
+      celltype_numbers = dplyr::bind_rows(present_celltypes_numbers, absent_celltypes_numbers) %>% dplyr::bind_rows(dominant_celltypes_numbers)
+      celltype_numbers = celltype_numbers %>% dplyr::mutate(freq = n/sum_present)
+
+      celltype_frequencies = celltype_numbers %>% dplyr::pull(freq)
+      names(celltype_frequencies) = celltype_numbers %>% dplyr::pull(seurat_clusters_oi)
+
+      return(celltype_frequencies)
+
+    })
+    names(celltype_frequencies_list) = regions
+    properties_df =  tibble::tibble(dataset_id = paste0(dataset_type, dataset_id),dataset_type = "artificial_dominant_rare_celltype_diverse", real_artificial = "artificial", uniform_diverse = "diverse", distinct_overlap = "overlap", dominant_celltype = TRUE, missing_celltype = FALSE, rare_celltype = TRUE, missing_celltype_sc = NA)
+
+  }
+  if (dataset_type == "artificial_regional_rare_celltype_diverse"){ # one cell type that is present over all regions, but in low frequency - difference in regions determined by other cell types. Some cell types in more than one region.
+
+    rare_celltype = sample(celltypes,1)
+    region_of_rare = sample(regions,1)
+    #print("rare cell type is")
+    #print(rare_celltype)
+
+    # check that the rare cell type is never alone in one region
+    celltype_region_samplings = c(sample(seq(n_regions)), sample(seq(n_regions), size = length(celltypes) -1 - length(seq(n_regions)), replace = TRUE))
+    celltype_region_splits =  split(setdiff(celltypes,rare_celltype), celltype_region_samplings)
+
+    celltype_frequencies_list = seq(n_regions) %>% lapply(function(i){
+      region_oi = regions[i]
+      celltypes_oi = celltype_region_splits[[i]] %>%dplyr::setdiff(rare_celltype)
+      other_celltypes = dplyr::setdiff(celltypes, celltypes_oi) %>%dplyr::setdiff(rare_celltype)
+
+      present_celltypes_numbers = tibble::tibble(seurat_clusters_oi = celltypes_oi, n = sample(seq(75,125),length(celltypes_oi)))
+      absent_celltypes_numbers = tibble::tibble(seurat_clusters_oi = other_celltypes, n = 0)
+      if(region_oi == region_of_rare){
+        rare_celltypes_numbers = tibble::tibble(seurat_clusters_oi = rare_celltype, n = 10)
+      } else {
+        rare_celltypes_numbers = tibble::tibble(seurat_clusters_oi = rare_celltype, n = 0)
+      }
+
+      sum_present = sum(present_celltypes_numbers$n) %>% sum(rare_celltypes_numbers$n)
+
+      celltype_numbers = dplyr::bind_rows(present_celltypes_numbers, absent_celltypes_numbers) %>% dplyr::bind_rows(rare_celltypes_numbers)
+      celltype_numbers = celltype_numbers %>% dplyr::mutate(freq = n/sum_present)
+
+      celltype_frequencies = celltype_numbers %>% dplyr::pull(freq)
+      names(celltype_frequencies) = celltype_numbers %>% dplyr::pull(seurat_clusters_oi)
+
+      return(celltype_frequencies)
+
+    })
+    names(celltype_frequencies_list) = regions
+    properties_df =  tibble::tibble(dataset_id = paste0(dataset_type, dataset_id),dataset_type = "artificial_regional_rare_celltype_diverse", real_artificial = "artificial", uniform_diverse = "diverse", distinct_overlap = "overlap", dominant_celltype = FALSE, missing_celltype = FALSE, rare_celltype = TRUE, missing_celltype_sc = NA)
+
   }
 
   # for in next function, we will need to have the variable in which region is stored if generating 'real synthetic data'
   properties_df = properties_df %>% dplyr::inner_join(tibble::tibble(real_artificial = c("real","artificial"), real_region_var = c(region_var, NA)), by = "real_artificial")
-
+  # print(properties_df)
   # Define the number of spots that needs to be generated per region (random number between n_spots_min and n_spots_max)
   n_spots_list = regions %>% lapply(function(region_oi){
     return(sample(seq(n_spots_min,n_spots_max),1))
@@ -568,7 +721,7 @@ make_region_celltype_assignment = function(seurat_obj, clust_var, n_regions, dat
 #' @param region_assignment_list Output of the function `make_region_celltype_assignment`
 #' @param visium_mean The mean of the normal distribution that will be used to pick the target number of counts for downsample.
 #' @param visium_sd The standard deviation of the normal distribution that will be used to pick the target number of counts for downsample.
-#' @param add_mock_region If you want to make a "mock region" in addition to the other regions, set this parameter to TRUE. Mock region is recommended when the synthetic data will be used to evaluate spatial/region annotation of cells, not when evaluating deconvolution tools. Default: FALSE.
+#' @param add_mock_region If you want to make a "mock region" in addition to the other regions, set this parameter to TRUE. Mock region is recommended when the synthetic data will be used to evaluate spatial/region annotation of cells, not when evaluating deconvolution tools. Default: FALSE. The mock region is generated similar as the real regions, but the input cell type frequencies are the same for each cell type, and after generation of the counts, the gene names are shuffled such that cellular identities in this mockregion are lost.
 #'
 #'
 #' @return list with five sublists: \cr
@@ -854,17 +1007,19 @@ generate_spots = function(region_oi, region_assignments, seurat_obj, visium_mean
 #' If your scRNAseq data object already provides information about the region/location a cell was sampled from, you could use this information as well to generate synthetic Visium data that will only pool cells together if they originate from the same region. \cr
 #'
 #' @usage
-#' generate_synthetic_visium(seurat_obj, dataset_type, clust_var, n_regions, region_var = NULL, dataset_id = "1", n_spots_min = 50, n_spots_max = 500, visium_mean = 20000, visium_sd = 7000, add_mock_region = FALSE)
+#' generate_synthetic_visium(seurat_obj, dataset_type, clust_var, n_regions, region_var = NULL, dataset_id = "1", n_spots_min = 50, n_spots_max = 500, visium_mean = 20000, visium_sd = 7000, add_mock_region = FALSE, sc_rnaseq_path = NA)
 #'
 #' @inheritParams make_region_celltype_assignment
 #' @inheritParams region_assignment_to_syn_data
+#' @param sc_rnaseq_path NA or indication of the path to read in the scRNAseq that should be used to integratie with this synthetic visium data. Default: NA
 #'
-#' @return list with five sublists: \cr
+#' @return list with six sublists: \cr
 #' counts: count matrix of the synthetic visium data \cr
 #' spot_composition: the cell type composition of each spot \cr
 #' relative_spot_composition: the relative cell type composition of each spot \cr
 #' gold_standard_priorregion: indication of which cell types belong to which prior region \cr
 #' dataset_properties: indication of the properties of the dataset
+#' sc_rnaseq_path: NA or indication of the path to read in the scRNAseq that should be used to integratie with this synthetic visium data
 #'
 #' @import Seurat
 #' @import dplyr
@@ -877,7 +1032,7 @@ generate_spots = function(region_oi, region_assignments, seurat_obj, visium_mean
 #'
 #' @export
 #'
-generate_synthetic_visium = function(seurat_obj, dataset_type, clust_var, n_regions, region_var = NULL, dataset_id = "1", n_spots_min = 50, n_spots_max = 500, visium_mean = 20000, visium_sd = 7000, add_mock_region = FALSE){
+generate_synthetic_visium = function(seurat_obj, dataset_type, clust_var, n_regions, region_var = NULL, dataset_id = "1", n_spots_min = 50, n_spots_max = 500, visium_mean = 20000, visium_sd = 7000, add_mock_region = FALSE, sc_rnaseq_path = NA){
 
   requireNamespace("dplyr")
   requireNamespace("Seurat")
@@ -886,7 +1041,7 @@ generate_synthetic_visium = function(seurat_obj, dataset_type, clust_var, n_regi
 
   region_assignment_list = make_region_celltype_assignment(seurat_obj = seurat_obj, clust_var = clust_var, n_regions = n_regions, dataset_type = dataset_type, region_var = region_var, dataset_id = dataset_id, n_spots_min = n_spots_min, n_spots_max = n_spots_max)
   synthetic_visium_data = region_assignment_to_syn_data(region_assignment_list = region_assignment_list, seurat_obj = seurat_obj, clust_var = clust_var, visium_mean = visium_mean, visium_sd = visium_sd, add_mock_region = add_mock_region)
-
+  synthetic_visium_data$sc_rnaseq_path = sc_rnaseq_path
   return(synthetic_visium_data)
 
 }

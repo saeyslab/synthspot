@@ -35,15 +35,26 @@ seurat_obj_scrnaseq = seurat_obj_scrnaseq %>% SetIdent(value = "celltype")
 DimPlot(seurat_obj_scrnaseq, reduction = "umap",pt.size = 0.5, label = T)
 ```
 
-![](analyze_syn_data_files/figure-gfm/unnamed-chunk-34-1.png)<!-- -->
+![](analyze_syn_data_files/figure-gfm/unnamed-chunk-2-1.png)<!-- -->
 
 Now, we will create a synthetic dataset based on this real dataset and
 with a more realistic number of spots. This will take some time to run.
 As example dataset type, we pick here `real_top2_overlap`.
 
+Because it could be possible that a cell type will belong to all
+regions, we will make the synthetic data in such a way that we have a
+‘mock region’ as well - no cell type should be predicted to belong to
+this region. Adding a mock region is thus recommended when the synthetic
+data will be used to evaluate spatial/region annotation of cells, not
+when evaluating deconvolution tools. The mock region is generated
+similar as the real regions, but the input cell type frequencies are the
+same for each cell type, and after generation of the counts, the gene
+names are shuffled such that cellular identities in this mock region are
+lost.
+
 ``` r
 synthetic_visium_data = generate_synthetic_visium(seurat_obj = seurat_obj_scrnaseq, dataset_type = "real_top2_overlap", clust_var = "subclass", region_var = "brain_subregion" , n_regions = NULL,
-                                                    n_spots_min = 50, n_spots_max = 200, visium_mean = 20000, visium_sd = 5000)
+                                                    n_spots_min = 50, n_spots_max = 200, visium_mean = 20000, visium_sd = 5000, add_mock_region = TRUE)
 ```
 
 # Processing the synthetic Visium data
@@ -88,7 +99,7 @@ p_exprs_clusters = DimPlot(seurat_obj_visium, reduction = "umap", label = TRUE) 
 patchwork::wrap_plots(list(p_priorregion, p_exprs_clusters), nrow = 1)
 ```
 
-![](analyze_syn_data_files/figure-gfm/unnamed-chunk-40-1.png)<!-- -->
+![](analyze_syn_data_files/figure-gfm/unnamed-chunk-8-1.png)<!-- -->
 Here, they map very nicely onto eachother, probably because this dataset
 type can be considered as ‘easy’ and different regions have strongly
 distinct cell type composition.
@@ -167,14 +178,14 @@ if(DefaultAssay(seurat_obj_scrnaseq) != "GS"){
 }
 
 # add the names of the regions here (change if necessary)
-basic_plot = FeaturePlot(seurat_obj_scrnaseq, features = c("L1","L2/3","L4", "L5" ,"L6"), ncol = 3, combine = FALSE)
+basic_plot = FeaturePlot(seurat_obj_scrnaseq, features = c("L1","L2/3","L4", "L5" ,"L6","mockregion"), ncol = 3, combine = FALSE)
 
 custom_scale_fill = scale_color_gradientn(colours = RColorBrewer::brewer.pal(n = 4, name = "Oranges"),values = c(0,0.2, 0.4, 0.6,  1),  limits = c(0, 1))
 gs_plots = lapply(basic_plot, function (x) x + custom_scale_fill + theme(legend.position = "none")) %>% patchwork::wrap_plots(ncol = 5)
 gs_plots
 ```
 
-![](analyze_syn_data_files/figure-gfm/unnamed-chunk-44-1.png)<!-- -->
+![](analyze_syn_data_files/figure-gfm/unnamed-chunk-12-1.png)<!-- -->
 
 Visualize the predictions
 
@@ -184,14 +195,14 @@ if(DefaultAssay(seurat_obj_scrnaseq) != "regions"){
   DefaultAssay(seurat_obj_scrnaseq) = "regions"
 }
 # add the names of the regions here (change if necessary) (seurat_obj_scrnaseq %>% rownames())
-basic_plot = FeaturePlot(seurat_obj_scrnaseq, features = c("L1","L2/3","L4", "L5" ,"L6"), ncol = 3, combine = FALSE)
+basic_plot = FeaturePlot(seurat_obj_scrnaseq, features = c("L1","L2/3","L4", "L5" ,"L6", "mockregion"), ncol = 3, combine = FALSE)
 
 custom_scale_fill = scale_color_gradientn(colours = RColorBrewer::brewer.pal(n = 4, name = "RdBu") %>% rev(),values = c(0,0.2, 0.4, 0.6,  1),  limits = c(0, 1))
 pred_plots = lapply(basic_plot, function (x) x + custom_scale_fill + theme(legend.position = "none")) %>% patchwork::wrap_plots(ncol = 5)
 pred_plots
 ```
 
-![](analyze_syn_data_files/figure-gfm/unnamed-chunk-45-1.png)<!-- -->
+![](analyze_syn_data_files/figure-gfm/unnamed-chunk-13-1.png)<!-- -->
 
 Put the visualizations next to each other
 
@@ -199,7 +210,7 @@ Put the visualizations next to each other
 patchwork::wrap_plots(list(gs_plots, pred_plots), nrow = 2) 
 ```
 
-![](analyze_syn_data_files/figure-gfm/unnamed-chunk-46-1.png)<!-- -->
+![](analyze_syn_data_files/figure-gfm/unnamed-chunk-14-1.png)<!-- -->
 You see that predictions don’t cover all regions they should cover\!
 
 # Compare gold standard regions to region predictions: classification evaluation
@@ -214,9 +225,29 @@ response_vector_L5 = seurat_obj_scrnaseq[["GS"]]@data["L5",]
 ROC_object = pROC::roc(response_vector_L5, prediction_vector_L5, plot = TRUE)
 ```
 
-![](analyze_syn_data_files/figure-gfm/unnamed-chunk-47-1.png)<!-- -->
+![](analyze_syn_data_files/figure-gfm/unnamed-chunk-15-1.png)<!-- -->
 
 ``` r
 ROC_object$auc
-## Area under the curve: 0.8885
+## Area under the curve: 0.8798
 ```
+
+# Notes on generating synthetic Visium data and evaluating it for integration methods
+
+To avoid potential bias, we recommend to split your input scRNAseq in
+two equivalent sub-datasets (eg through stratified sampling of half of
+the cells for one sub-dataset, and the other half of the cells for the
+second sub-dataset). One sub-dataset can then be used to generate the
+synthetic visium dataset, the second sub-dataset can be used to
+integrate with the synthetic visium dataset for evaluation. This way,
+the generation and evaluation will be performed based on different
+single cells.
+
+Instead of splitting one dataset into two, it is also possible to use
+different datasets (but containing the same cell types and cell type
+labels) for generation and integration/evaluation. This way you could
+check the potential effect of batch effects or cross-platform
+differences (eg use single-nucleus dataset to generate the synthetic
+data, and single-cell to integratie/evaluate and compare this to the
+situation where both generation and integration/evaluation datasets came
+from the same platform).

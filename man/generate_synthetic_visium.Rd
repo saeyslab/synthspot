@@ -4,7 +4,7 @@
 \alias{generate_synthetic_visium}
 \title{Generate synthetic Visium/ST data from input scRNAseq data.}
 \usage{
-generate_synthetic_visium(seurat_obj, dataset_type, clust_var, n_regions, region_var = NULL, dataset_id = "1", n_spots_min = 50, n_spots_max = 500, visium_mean = 20000, visium_sd = 7000, add_mock_region = FALSE)
+generate_synthetic_visium(seurat_obj, dataset_type, clust_var, n_regions, region_var = NULL, dataset_id = "1", n_spots_min = 50, n_spots_max = 500, visium_mean = 20000, visium_sd = 7000, add_mock_region = FALSE, sc_rnaseq_path = NA)
 }
 \arguments{
 \item{seurat_obj}{The input scRNAseq data stored as Seurat object.}
@@ -22,7 +22,11 @@ generate_synthetic_visium(seurat_obj, dataset_type, clust_var, n_regions, region
 "artificial_diverse_overlap": celltype-prior region assignments are entirely artificial and thus not based on possibly present regional information in the input scRNAseq data. Each artifical prior region could have some overlap in cell type contribution with other regions, and cell type frequencies are different for each cell type in each region.  \cr \cr
 "artificial_dominant_celltype_diverse": celltype-prior region assignments are entirely artificial and thus not based on possibly present regional information in the input scRNAseq data. Each artifical prior region could have some overlap in cell type contribution with other regions, and cell type frequencies are different for each cell type in each region. There is one dominant celltype that is present in each region, and is much more abundant than other cell types (5-15x more). \cr \cr
 "artificial_partially_dominant_celltype_diverse: celltype-prior region assignments are entirely artificial and thus not based on possibly present regional information in the input scRNAseq data. Each artifical prior region could have some overlap in cell type contribution with other regions, and cell type frequencies are different for each cell type in each region. There is one dominant celltype that is present in all but one regions ("partially dominant"), and is much more abundant than other cell types, except for one region where it is equally abundant. \cr \cr
-"artificial_missing_celltypes_visium": the same as the 'artificial_diverse_overlap' dataset type, but now some random input scRNAseq cell types will be left out, and thus not used to generate synthetic data. \cr \cr}
+"artificial_missing_celltypes_visium": the same as the 'artificial_diverse_overlap' dataset type, but now some random input scRNAseq cell types will be left out, and thus not used to generate synthetic data. \cr \cr
+"artificial_dominant_rare_celltype_diverse": the same as 'artificial_dominant_celltype_diverse', except that the dominant cell type that is present in all regions is much less abundant than other cell types.
+"artificial_regional_rare_celltype_diverse": the same as 'artificial_dominant_rare_celltype_diverse', except that the rare cell type is now only present in one region instead of all regions.
+"artificial_diverse_distinct_missing_celltype_sc": the same as 'artificial_diverse_distinct' except that one random cell type will be removed from the reference scRNAseq dataset at time of integration and evaluation. This to resemble a case where integration is done with an incomplete reference.
+"artificial_diverse_overlap_missing_celltype_sc": the same as 'artificial_diverse_overlap' except that one random cell type will be removed from the reference scRNAseq dataset at time of integration and evaluation. This to resemble a case where integration is done with an incomplete reference.}
 
 \item{clust_var}{Name of the meta data column in which the cell type label of interest is defined.}
 
@@ -40,15 +44,18 @@ generate_synthetic_visium(seurat_obj, dataset_type, clust_var, n_regions, region
 
 \item{visium_sd}{The standard deviation of the normal distribution that will be used to pick the target number of counts for downsample.}
 
-\item{add_mock_region}{If you want to make a "mock region" in addition to the other regions, set this parameter to TRUE. Mock region is recommended when the synthetic data will be used to evaluate spatial/region annotation of cells, not when evaluating deconvolution tools. Default: FALSE.}
+\item{add_mock_region}{If you want to make a "mock region" in addition to the other regions, set this parameter to TRUE. Mock region is recommended when the synthetic data will be used to evaluate spatial/region annotation of cells, not when evaluating deconvolution tools. Default: FALSE. The mock region is generated similar as the real regions, but the input cell type frequencies are the same for each cell type, and after generation of the counts, the gene names are shuffled such that cellular identities in this mockregion are lost.}
+
+\item{sc_rnaseq_path}{NA or indication of the path to read in the scRNAseq that should be used to integratie with this synthetic visium data. Default: NA}
 }
 \value{
-list with five sublists: \cr
+list with six sublists: \cr
 counts: count matrix of the synthetic visium data \cr
 spot_composition: the cell type composition of each spot \cr
 relative_spot_composition: the relative cell type composition of each spot \cr
 gold_standard_priorregion: indication of which cell types belong to which prior region \cr
 dataset_properties: indication of the properties of the dataset
+sc_rnaseq_path: NA or indication of the path to read in the scRNAseq that should be used to integratie with this synthetic visium data
 }
 \description{
 \code{generate_synthetic_visium} This function generates synthetic Visium/ST data from input scRNAseq data. \cr

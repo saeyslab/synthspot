@@ -17,7 +17,7 @@ region_assignment_to_syn_data(region_assignment_list, seurat_obj, clust_var, vis
 
 \item{visium_sd}{The standard deviation of the normal distribution that will be used to pick the target number of counts for downsample.}
 
-\item{add_mock_region}{If you want to make a "mock region" in addition to the other regions, set this parameter to TRUE. Mock region is recommended when the synthetic data will be used to evaluate spatial/region annotation of cells, not when evaluating deconvolution tools. Default: FALSE.}
+\item{add_mock_region}{If you want to make a "mock region" in addition to the other regions, set this parameter to TRUE. Mock region is recommended when the synthetic data will be used to evaluate spatial/region annotation of cells, not when evaluating deconvolution tools. Default: FALSE. The mock region is generated similar as the real regions, but the input cell type frequencies are the same for each cell type, and after generation of the counts, the gene names are shuffled such that cellular identities in this mockregion are lost.}
 }
 \value{
 list with five sublists: \cr

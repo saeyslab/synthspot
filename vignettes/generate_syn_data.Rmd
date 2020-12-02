@@ -30,6 +30,8 @@ library(synthvisium)
 library(dplyr)
 ```
 
+# Generating synthetic Visium-like spot data from input scRNAseq data
+
 ## Generating Visium-like spot data from toy input scRNAseq data.
 
 #### Explore input scRNAseq data
@@ -78,6 +80,15 @@ We also provide a data frame with properties of this specific dataset. This migh
 synthetic_visium_data$dataset_properties 
 ```
 
+## Generating Visium-like spot data from toy input scRNAseq data, with inclusion of a 'mock region'.
+
+Because it could be possible that a cell type will belong to all regions, we will make the synthetic data in such a way that we have a 'mock region' as well - no cell type should be predicted to belong to this region. Adding a mock region is thus recommended when the synthetic data will be used to evaluate spatial/region annotation of cells, not when evaluating deconvolution tools.
+The mock region is generated similar as the real regions, but the input cell type frequencies are the same for each cell type, and after generation of the counts, the gene names are shuffled such that cellular identities in this mock region are lost.
+
+```{r}
+synthetic_visium_data = generate_synthetic_visium(seurat_obj = seurat_obj, dataset_type = "artificial_diverse_distinct", clust_var = "subclass", n_regions = 5, n_spots_min = 5, n_spots_max = 20, visium_mean = 30000, visium_sd = 8000, add_mock_region = TRUE)
+```
+
 ## Generating Visium-like spot data from toy input scRNAseq data that contains information of the anatomical regions of cells.
 
 Just pooling cells from different cell types as done in the previous example could have the (theoretical) disadvantage that spatial information inherently encoded in the scRNAseq data is lost. This is because cells extracted from a similar anatomical region could be influenced by the same microenvironmental signal, resulting in a shared spatial gene expression pattern for cells in the same region, which could be reflected in the input scRNAseq data. In case you know the anatomical origin from cells in the input scRNAseq data, it could be useful to generate synthetic Visium-spot data by only sampling cells in one spot if those cells belong to the same anatomical region.
@@ -112,14 +123,23 @@ synthetic_visium_data = generate_synthetic_visium(seurat_obj = seurat_obj, datas
                                                     n_spots_min = 50, n_spots_max = 200, visium_mean = 20000, visium_sd = 5000)
 ```
 
-Check the following vignette to find a short demonstration of a basic analysis you can do on this synthetic Visium data. We also show how to do the label transfer and compare gold standard labels with predicted labels. [Analyzing synthetic Visium-like spot data for evaluating label transfer methods](analyze_syn_data.md):`vignette("analyze_syn_data", package="synthvisium")`. 
+# Using synthetic Visium-like spot data to evaluate performance of Visium-scRNAseq integration workflows
 
-## Information about the different dataset types.
+Check the following vignette to find a short demonstration of a basic analysis you can do on this synthetic Visium data. We also show how to do spatial annotation of cells through Seurat label transfer and compare gold standard labels with predicted labels. [Analyzing synthetic Visium-like spot data for evaluating label transfer methods](analyze_syn_data.md):`vignette("analyze_syn_data", package="synthvisium")`. 
 
-Currently, there are 13 possible dataset types implemented:
+# Information about the different dataset types.
+
+Currently, there are 17 possible dataset types implemented:
 
 ```{r}
-possible_dataset_types = c("real", "real_top1","real_top1_uniform","real_top2_overlap","real_top2_overlap_uniform", "real_missing_celltypes_visium", "artificial_uniform_distinct", "artificial_diverse_distinct",  "artificial_uniform_overlap", "artificial_diverse_overlap", "artificial_dominant_celltype_diverse", "artificial_partially_dominant_celltype_diverse", "artificial_missing_celltypes_visium")
+possible_dataset_types = c("real", "real_top1","real_top1_uniform","real_top2_overlap","real_top2_overlap_uniform", "real_missing_celltypes_visium", "artificial_uniform_distinct", "artificial_diverse_distinct",  "artificial_uniform_overlap", "artificial_diverse_overlap", "artificial_dominant_celltype_diverse", "artificial_partially_dominant_celltype_diverse", "artificial_missing_celltypes_visium",                      "artificial_dominant_rare_celltype_diverse","artificial_regional_rare_celltype_diverse", "artificial_diverse_distinct_missing_celltype_sc","artificial_diverse_overlap_missing_celltype_sc")
+```
+
+The dataset types that are possible for every input scRNAseq dataset and that we recommend to use are:
+
+```{r}
+recommended_dataset_types = c("artificial_uniform_distinct", "artificial_diverse_distinct",  "artificial_uniform_overlap", "artificial_diverse_overlap", "artificial_dominant_celltype_diverse", "artificial_partially_dominant_celltype_diverse", "artificial_dominant_rare_celltype_diverse","artificial_regional_rare_celltype_diverse")
+#recommended_dataset_types = c("artificial_uniform_distinct", "artificial_diverse_distinct",  "artificial_uniform_overlap", "artificial_diverse_overlap", "artificial_dominant_celltype_diverse", "artificial_partially_dominant_celltype_diverse", "artificial_dominant_rare_celltype_diverse","artificial_regional_rare_celltype_diverse", "artificial_diverse_distinct_missing_celltype_sc","artificial_diverse_overlap_missing_celltype_sc")
 ```
 
 Explanation of each of the types:
@@ -137,5 +157,17 @@ Explanation of each of the types:
 * **artificial_dominant_celltype_diverse**: celltype-prior region assignments are entirely  __artificial__  and thus not based on possibly present regional information in the input scRNAseq data. Each artifical prior region could have some overlap in cell type contribution with other regions, and cell type frequencies are different for each cell type in each region. There is one dominant celltype that is present in each region, and is much more abundant than other cell types (5-15x more). 
 * **artificial_partially_dominant_celltype_diverse**: celltype-prior region assignments are entirely  __artificial__  and thus not based on possibly present regional information in the input scRNAseq data. Each artifical prior region could have some overlap in cell type contribution with other regions, and cell type frequencies are different for each cell type in each region. There is one dominant celltype that is present in all but one regions (partially dominant), and is much more abundant than other cell types, except for one region where it is equally abundant. 
 * **artificial_missing_celltypes_visium**: the same as the 'artificial_diverse_overlap' dataset type, but now some random input scRNAseq cell types will be left out, and thus not used to generate synthetic data. 
+* **artificial_dominant_rare_celltype_diverse**: the same as 'artificial_dominant_celltype_diverse', except that the dominant cell type that is present in all regions is much less abundant than other cell types.
+* **artificial_regional_rare_celltype_diverse**: the same as 'artificial_dominant_rare_celltype_diverse', except that the rare cell type is now only present in one region instead of all regions.
+* **artificial_diverse_distinct_missing_celltype_sc**: the same as 'artificial_diverse_distinct' except that we here include information in the `properties_df` about a random cell type that could be removed from the reference scRNAseq dataset later on during integration and evaluation. This to simulate a case where integration is done with an incomplete reference. Note that you should adapt your integration/evaluation code such that this missing_celltype can be read by your integration/evaluation function, otherwise this will be the same as 'artificial_diverse_distinct'
+* **artificial_diverse_overlap_missing_celltype_sc**: the same as 'artificial_diverse_distinct_missing_celltype_sc' but now based on the 'artificial_diverse_overlap' basic type.
+
+Some important notes on these data types:
+
+The data types indicated with the 'real_' prefix are only possible to use for input scRNAseq datasets that have a regional indication of each cell. They could be extra difficult if these regional indicators are not very distinct (and/or accurate). They also use the real cell type frequency (= the number of cells of cell type of interest compared to all cells in scRNAseq data)
+
+The data types `real_missing_celltypes_visium` and `artificial_missing_celltypes_visium` could be considered less realistic since they assume that your visium data will lack cell types that are present in your reference of the scRNAseq data. If the visium sample and scRNAseq sample are taken from the same tissue, this won't occur in practice.
+
+The data types `artificial_diverse_overlap_missing_celltype_sc` and `artificial_diverse_distinct_missing_celltype_sc` can be used to simulate the use case with an incomplete reference scRNAseq dataset, but only if the integration and evaluation functions are adapted such that they can exploit the additional information offered in the `properties_df` output for these types. Note that you can simulate the use case with an incomplete reference scRNAseq dataset as well in other ways.
 
 

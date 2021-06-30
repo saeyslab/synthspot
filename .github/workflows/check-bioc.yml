@@ -250,7 +250,7 @@ jobs:
       - name: Test coverage
         if: github.ref == 'refs/heads/master' && env.run_covr == 'true'
         run: |
-          covr::codecov()
+          covr::codecov(token = "066e6a31-7bce-4737-a7b1-4adab61cf949")
         shell: Rscript {0}
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v1

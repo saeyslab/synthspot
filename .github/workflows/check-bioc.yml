@@ -255,7 +255,7 @@ jobs:
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v1
         with:
-          token: 066e6a31-7bce-4737-a7b1-4adab61cf949
+          token: ${{ secrets.CODECOV_TOKEN }} # not required for public repos
       - name: Install pkgdown
         if: github.ref == 'refs/heads/master' && env.run_pkgdown == 'true'
         run: |
@@ -396,9 +396,6 @@ jobs:
           message(paste('****', Sys.time(), 'installing rcmdcheck and BiocCheck ****'))
           remotes::install_cran("rcmdcheck")
           BiocManager::install("BiocCheck")
-          # BiocManager::install("limma")
-          # remotes::install_github("satijalab/seurat", ref = "spatial")
-          # remotes::install_github("saeyslab/nichenetr")
 
 
         shell: Rscript {0}

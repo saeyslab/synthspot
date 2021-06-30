@@ -14,7 +14,7 @@ rmarkdown::render("README.Rmd",output_format = "md_document")
 
 <!-- badges: start -->
 [![R build status](https://github.com/browaeysrobin/synthvisium/workflows/R-CMD-check-bioc/badge.svg)](https://github.com/browaeysrobin/synthvisium/actions)
-[![Coverage Status](https://codecov.io/gh/browaeysrobin/synthvisium/branch/master/graph/badge.svg?token=NKZBMJJDYA)](https://codecov.io/gh/browaeysrobin/synthvisium)
+[![Coverage Status](https://codecov.io/gh/browaeysrobin/synthvisium/branch/master/graph/badge.svg?token=MIOIRFJDQN)](https://codecov.io/gh/browaeysrobin/synthvisium)
 <!-- badges: end -->
 
 **synthvisium: an R package to generate synthetic Visium-like spot data by generating artificial mixtures of cells from input scRNAseq data.** The goal of this package is to give users the possibilities to generate different types of synthetic data for evaluation of spot deconvolution and label transfer methods. Since these synthetic datasets just consist of spots/mixtures of cells without modeling spatial aspects, they cannot be used to evaluate methods that require a spatial component in the data.

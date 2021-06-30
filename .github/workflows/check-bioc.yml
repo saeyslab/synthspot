@@ -250,12 +250,9 @@ jobs:
       - name: Test coverage
         if: github.ref == 'refs/heads/master' && env.run_covr == 'true'
         run: |
-          covr::codecov(token = "066e6a31-7bce-4737-a7b1-4adab61cf949")
+          # covr::codecov(token = "066e6a31-7bce-4737-a7b1-4adab61cf949")
+          covr::codecov(token = "${{ secrets.CODECOV_TOKEN }}")
         shell: Rscript {0}
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v1
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }} # not required for public repos
       - name: Install pkgdown
         if: github.ref == 'refs/heads/master' && env.run_pkgdown == 'true'
         run: |

@@ -3,15 +3,14 @@
 rmarkdown::render("README.Rmd",output_format = "md_document")
 -->
 
-synthvisium
-===========
+# synthvisium
 
 <!-- badges: start -->
 
 [![R build
 status](https://github.com/browaeysrobin/synthvisium/workflows/R-CMD-check-bioc/badge.svg)](https://github.com/browaeysrobin/synthvisium/actions)
 [![Coverage
-Status](https://codecov.io/gh/browaeysrobin/synthvisium/branch/master/graph/badge.svg?token=NKZBMJJDYA)](https://codecov.io/gh/browaeysrobin/synthvisium)
+Status](https://codecov.io/gh/browaeysrobin/synthvisium/branch/master/graph/badge.svg?token=MIOIRFJDQN)](https://codecov.io/gh/browaeysrobin/synthvisium)
 <!-- badges: end -->
 
 **synthvisium: an R package to generate synthetic Visium-like spot data
@@ -23,8 +22,7 @@ of spots/mixtures of cells without modeling spatial aspects, they cannot
 be used to evaluate methods that require a spatial component in the
 data.
 
-How does this synthetic data generator work?
---------------------------------------------
+## How does this synthetic data generator work?
 
 The goal of this simulator is to create a dataset that provide gene
 expression information for ‘mini-bulk’ spots, similar to data generated
@@ -62,8 +60,7 @@ differences between scRNAseq and Visium data are not yet incorporated
 and that a region is just a group of spots and that a spatial
 information layer is lacking.
 
-Installation of synthvisium
----------------------------
+## Installation of synthvisium
 
 Installation depends on the number of dependencies that has already been
 installed on your pc, but should not take much time.
@@ -78,8 +75,7 @@ with:
 synthvisium has been tested on Windows, Mac and Linux (most recently
 tested R version: R 4.0.2)
 
-Learning to use synthvisium
----------------------------
+## Learning to use synthvisium
 
 In the following vignette, you can learn how to generate the synthetic
 data by synthvisium:

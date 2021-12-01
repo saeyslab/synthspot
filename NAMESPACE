@@ -2,6 +2,7 @@
 
 export(generate_spots)
 export(generate_synthetic_visium)
+export(generate_synthetic_visium_lite)
 export(make_region_celltype_assignment)
 export(region_assignment_to_syn_data)
 import(Seurat)

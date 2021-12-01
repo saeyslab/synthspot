@@ -1099,7 +1099,7 @@ generate_synthetic_visium_lite = function(seurat_obj, clust_var, dataset_id = "1
   if(!is.character(dataset_id)){
     stop("dataset_id argument should be a character vector with one element")
   }
-  if(!is.numeric(n_spots) | length(n_spots_min) != 1){
+  if(!is.numeric(n_spots) | length(n_spots) != 1){
     stop("n_spots argument should be a numeric vector with one element")
   }
   

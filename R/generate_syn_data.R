@@ -1045,3 +1045,52 @@ generate_synthetic_visium = function(seurat_obj, dataset_type, clust_var, n_regi
   return(synthetic_visium_data)
 
 }
+
+#' @title Generate synthetic Visium/ST data from input scRNAseq data, using the celltype composition from the input as priors.
+#'
+#' @description \code{generate_synthetic_visium} This function generates synthetic Visium/ST data from input scRNAseq data. \cr
+#' To create synthetic Visium spots, we will generate an artificial mixture of single cells (based on the assumption that a spot is a mixture of n cells (n between 2 and 10)) \cr
+#' Cells from the input scRNAseq data will be sampled based on the provided cell type frequencies per region (such that each region has a different cellular composition), and their counts will be summed. \cr
+#' After summation of the counts, the counts will be downsampled to get a total number of counts per spot that is typical for a Visium dataset. This target number of counts will be determined by sampling from a Normal distribution with mean and SD provided by the user. \cr
+#' You can generate different 'tissue types' by changing the way the cell type frequencies are defined. Read the argument description of `dataset_type` for seeing the different tissue type options. \cr
+#' If your scRNAseq data object already provides information about the region/location a cell was sampled from, you could use this information as well to generate synthetic Visium data that will only pool cells together if they originate from the same region. \cr
+#'
+#' @usage
+#' generate_synthetic_visium(seurat_obj, dataset_type, clust_var, n_regions, region_var = NULL, dataset_id = "1", n_spots_min = 50, n_spots_max = 500, visium_mean = 20000, visium_sd = 7000, add_mock_region = FALSE, sc_rnaseq_path = NA)
+#'
+#' @inheritParams make_region_celltype_assignment
+#' @inheritParams region_assignment_to_syn_data
+#' @param sc_rnaseq_path NA or indication of the path to read in the scRNAseq that should be used to integratie with this synthetic visium data. Default: NA
+#'
+#' @return list with six sublists: \cr
+#' counts: count matrix of the synthetic visium data \cr
+#' spot_composition: the cell type composition of each spot \cr
+#' relative_spot_composition: the relative cell type composition of each spot \cr
+#' gold_standard_priorregion: indication of which cell types belong to which prior region \cr
+#' dataset_properties: indication of the properties of the dataset
+#' sc_rnaseq_path: NA or indication of the path to read in the scRNAseq that should be used to integratie with this synthetic visium data
+#'
+#' @import Seurat
+#' @import dplyr
+#'
+#' @examples
+#' \dontrun{
+#' library(Seurat)
+#' synthetic_visium_data = generate_synthetic_visium(seurat_obj = seurat_obj, dataset_type = "artificial_missing_celltypes_visium", clust_var = "subclass", n_regions = 5)
+#' }
+#'
+#' @export
+#'
+generate_synthetic_visium = function(seurat_obj, dataset_type, clust_var, n_regions, region_var = NULL, dataset_id = "1", n_spots_min = 50, n_spots_max = 500, visium_mean = 20000, visium_sd = 7000, add_mock_region = FALSE, sc_rnaseq_path = NA){
+  
+  requireNamespace("dplyr")
+  requireNamespace("Seurat")
+  
+  # input checks are implemented in the functions that are used here under the hood.
+  
+  region_assignment_list = make_region_celltype_assignment(seurat_obj = seurat_obj, clust_var = clust_var, n_regions = n_regions, dataset_type = dataset_type, region_var = region_var, dataset_id = dataset_id, n_spots_min = n_spots_min, n_spots_max = n_spots_max)
+  synthetic_visium_data = region_assignment_to_syn_data(region_assignment_list = region_assignment_list, seurat_obj = seurat_obj, clust_var = clust_var, visium_mean = visium_mean, visium_sd = visium_sd, add_mock_region = add_mock_region)
+  synthetic_visium_data$sc_rnaseq_path = sc_rnaseq_path
+  return(synthetic_visium_data)
+  
+}

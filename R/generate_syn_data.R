@@ -1046,21 +1046,22 @@ generate_synthetic_visium = function(seurat_obj, dataset_type, clust_var, n_regi
 
 }
 
-#' @title Generate synthetic Visium/ST data from input scRNAseq data, using the celltype composition from the input as priors.
+#' @title Generate synthetic Visium/ST data from input scRNAseq data, using the cell type composition from the input as priors.
 #'
-#' @description \code{generate_synthetic_visium} This function generates synthetic Visium/ST data from input scRNAseq data. \cr
-#' To create synthetic Visium spots, we will generate an artificial mixture of single cells (based on the assumption that a spot is a mixture of n cells (n between 2 and 10)) \cr
-#' Cells from the input scRNAseq data will be sampled based on the provided cell type frequencies per region (such that each region has a different cellular composition), and their counts will be summed. \cr
-#' After summation of the counts, the counts will be downsampled to get a total number of counts per spot that is typical for a Visium dataset. This target number of counts will be determined by sampling from a Normal distribution with mean and SD provided by the user. \cr
-#' You can generate different 'tissue types' by changing the way the cell type frequencies are defined. Read the argument description of `dataset_type` for seeing the different tissue type options. \cr
-#' If your scRNAseq data object already provides information about the region/location a cell was sampled from, you could use this information as well to generate synthetic Visium data that will only pool cells together if they originate from the same region. \cr
+#' @description \code{generate_synthetic_visium_lite} This function generates synthetic Visium/ST data from input scRNAseq data. \cr
+#' In contrast to the original function, the cell type frequencies are based on the cell type composition of the input scRNAseq data. \cr
+#' Because of this, there can only be 1 region. It is recommended to use single-nucleus RNA-seq data, as it has been shown to capture tissue compositions more accurately than scRNA-seq. \cr
 #'
 #' @usage
-#' generate_synthetic_visium(seurat_obj, dataset_type, clust_var, n_regions, region_var = NULL, dataset_id = "1", n_spots_min = 50, n_spots_max = 500, visium_mean = 20000, visium_sd = 7000, add_mock_region = FALSE, sc_rnaseq_path = NA)
+#' generate_synthetic_visium_lite(seurat_obj, clust_var, dataset_id = "1", n_spots = 500, visium_mean = 20000, visium_sd = 7000, sc_rnaseq_path = NA)
 #'
-#' @inheritParams make_region_celltype_assignment
-#' @inheritParams region_assignment_to_syn_data
+#' @param seurat_obj The input scRNAseq data stored as Seurat object.
+#' @param clust_var Name of the meta data column in which the cell type label of interest is defined.
+#' @param dataset_id Character vector to define how you want to identify the dataset. The final identifier/name of the dataset will be the description of the dataset type followed by this character vector.
+#' @param n_spots The number of spots to be generated. Default 500.
 #' @param sc_rnaseq_path NA or indication of the path to read in the scRNAseq that should be used to integratie with this synthetic visium data. Default: NA
+#' @param visium_mean The mean of the normal distribution that will be used to pick the target number of counts for downsample.
+#' @param visium_sd The standard deviation of the normal distribution that will be used to pick the target number of counts for downsample.
 #'
 #' @return list with six sublists: \cr
 #' counts: count matrix of the synthetic visium data \cr
@@ -1076,21 +1077,51 @@ generate_synthetic_visium = function(seurat_obj, dataset_type, clust_var, n_regi
 #' @examples
 #' \dontrun{
 #' library(Seurat)
-#' synthetic_visium_data = generate_synthetic_visium(seurat_obj = seurat_obj, dataset_type = "artificial_missing_celltypes_visium", clust_var = "subclass", n_regions = 5)
+#' synthetic_visium_data = generate_synthetic_visium_lite(seurat_obj = seurat_obj, clust_var = "subclass")
 #' }
 #'
 #' @export
 #'
-generate_synthetic_visium = function(seurat_obj, dataset_type, clust_var, n_regions, region_var = NULL, dataset_id = "1", n_spots_min = 50, n_spots_max = 500, visium_mean = 20000, visium_sd = 7000, add_mock_region = FALSE, sc_rnaseq_path = NA){
+generate_synthetic_visium_lite = function(seurat_obj, clust_var, dataset_id = "1", n_spots = 500, visium_mean = 20000, visium_sd = 7000, sc_rnaseq_path = NA){
   
   requireNamespace("dplyr")
   requireNamespace("Seurat")
   
-  # input checks are implemented in the functions that are used here under the hood.
+  if(class(seurat_obj) != "Seurat"){
+    stop("'seurat_obj' argument should be a Seurat Object")
+  }
+  if(!is.character(clust_var)){
+    stop("clust_var argument should be a character vector with one element")
+  }
+  if(!clust_var %in% colnames(seurat_obj@meta.data)){
+    stop("clust_var argument should be a valid column name of the seurat_obj meta.data")
+  }
+  if(!is.character(dataset_id)){
+    stop("dataset_id argument should be a character vector with one element")
+  }
+  if(!is.numeric(n_spots) | length(n_spots_min) != 1){
+    stop("n_spots argument should be a numeric vector with one element")
+  }
   
-  region_assignment_list = make_region_celltype_assignment(seurat_obj = seurat_obj, clust_var = clust_var, n_regions = n_regions, dataset_type = dataset_type, region_var = region_var, dataset_id = dataset_id, n_spots_min = n_spots_min, n_spots_max = n_spots_max)
-  synthetic_visium_data = region_assignment_to_syn_data(region_assignment_list = region_assignment_list, seurat_obj = seurat_obj, clust_var = clust_var, visium_mean = visium_mean, visium_sd = visium_sd, add_mock_region = add_mock_region)
+  # Get cell type frequency based on cluster metadata
+  seurat_obj$seurat_clusters_oi = droplevels(seurat_obj@meta.data[,clust_var] %>% as.factor())
+  celltype_frequencies_list = list(priorregion1 = table(seurat_obj$seurat_clusters_oi)/ncol(seurat_obj))
+  
+  # Dataset property
+  properties_df =  tibble::tibble(dataset_id = paste0("prior_from_data", dataset_id),dataset_type = "prior_from_data", real_artificial = "NA", uniform_diverse = "NA", distinct_overlap = "NA", dominant_celltype = FALSE, missing_celltype = FALSE, rare_celltype = FALSE, missing_celltype_sc = NA)
+  
+  # There is only 1 region, but create a list to be consistent with previous functions
+  n_spots_list = list(n_spots) %>% setNames("priorregion1")
+  region_assignments = purrr::map2(n_spots_list, celltype_frequencies_list, function(x,y){return(list(n_spots = x, celltype_freq = y))})
+  gs = purrr::map2(names(celltype_frequencies_list),celltype_frequencies_list, function(region, celltype_freq){
+    tibble::tibble(prior_region = region, celltype = names(celltype_freq), freq = celltype_freq, present = celltype_freq > 0)
+  }) %>% dplyr::bind_rows()
+  
+  # Same workflow as original generate_synthetic_visium function
+  region_assignment_list = list(region_assignments = region_assignments, dataset_properties = properties_df, gold_standard_priorregion = gs)
+  synthetic_visium_data = region_assignment_to_syn_data(region_assignment_list = region_assignment_list, seurat_obj = seurat_obj, clust_var = clust_var, visium_mean = visium_mean, visium_sd = visium_sd)
   synthetic_visium_data$sc_rnaseq_path = sc_rnaseq_path
+  
   return(synthetic_visium_data)
   
 }

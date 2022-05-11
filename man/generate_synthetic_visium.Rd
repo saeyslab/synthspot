@@ -4,7 +4,7 @@
 \alias{generate_synthetic_visium}
 \title{Generate synthetic Visium/ST data from input scRNAseq data.}
 \usage{
-generate_synthetic_visium(seurat_obj, dataset_type, clust_var, n_regions, region_var = NULL, dataset_id = "1", n_spots_min = 50, n_spots_max = 500, visium_mean = 20000, visium_sd = 7000, add_mock_region = FALSE, sc_rnaseq_path = NA)
+generate_synthetic_visium(seurat_obj, dataset_type, clust_var, n_regions, region_var = NULL, dataset_id = "1", n_spots_min = 50, n_spots_max = 500, visium_mean = 20000, visium_sd = 7000, n_cells_min = 2, n_cells_max = 10, add_mock_region = FALSE, sc_rnaseq_path = NA)
 }
 \arguments{
 \item{seurat_obj}{The input scRNAseq data stored as Seurat object.}
@@ -44,6 +44,10 @@ generate_synthetic_visium(seurat_obj, dataset_type, clust_var, n_regions, region
 
 \item{visium_sd}{The standard deviation of the normal distribution that will be used to pick the target number of counts for downsample.}
 
+\item{n_cells_min}{Integer indicating the minimum number of cells sampled per spot. Default: 2}
+
+\item{n_cells_max}{Integer indicating the maximum number of cells sampled per spot. Default: 10}
+
 \item{add_mock_region}{If you want to make a "mock region" in addition to the other regions, set this parameter to TRUE. Mock region is recommended when the synthetic data will be used to evaluate spatial/region annotation of cells, not when evaluating deconvolution tools. Default: FALSE. The mock region is generated similar as the real regions, but the input cell type frequencies are the same for each cell type, and after generation of the counts, the gene names are shuffled such that cellular identities in this mockregion are lost.}
 
 \item{sc_rnaseq_path}{NA or indication of the path to read in the scRNAseq that should be used to integratie with this synthetic visium data. Default: NA}
@@ -59,7 +63,7 @@ sc_rnaseq_path: NA or indication of the path to read in the scRNAseq that should
 }
 \description{
 \code{generate_synthetic_visium} This function generates synthetic Visium/ST data from input scRNAseq data. \cr
-To create synthetic Visium spots, we will generate an artificial mixture of single cells (based on the assumption that a spot is a mixture of n cells (n between 2 and 10)) \cr
+To create synthetic Visium spots, we will generate an artificial mixture of single cells (based on the assumption that a spot is a mixture of n cells \cr
 Cells from the input scRNAseq data will be sampled based on the provided cell type frequencies per region (such that each region has a different cellular composition), and their counts will be summed. \cr
 After summation of the counts, the counts will be downsampled to get a total number of counts per spot that is typical for a Visium dataset. This target number of counts will be determined by sampling from a Normal distribution with mean and SD provided by the user. \cr
 You can generate different 'tissue types' by changing the way the cell type frequencies are defined. Read the argument description of `dataset_type` for seeing the different tissue type options. \cr

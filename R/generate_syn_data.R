@@ -715,14 +715,15 @@ make_region_celltype_assignment = function(seurat_obj, clust_var, n_regions, dat
 #' Cells from the input scRNAseq data will be sampled based on the provided cell type frequencies per region (such that each region has a different cellular composition), and their counts will be summed.
 #' After summation of the counts, the counts will be downsampled to get a total number of counts per spot that is typical for a Visium dataset. This target number of counts will be determined by sampling from a Normal distribution with mean and SD provided by the user.
 #' @usage
-#' region_assignment_to_syn_data(region_assignment_list, seurat_obj, clust_var, visium_mean = 20000, visium_sd = 7000, add_mock_region = FALSE)
+#' region_assignment_to_syn_data(region_assignment_list, seurat_obj, clust_var, visium_mean = 20000, visium_sd = 7000, n_cells_min = 2, n_cells_max = 10, add_mock_region = FALSE)
 #'
 #' @inheritParams make_region_celltype_assignment
 #' @param region_assignment_list Output of the function `make_region_celltype_assignment`
 #' @param visium_mean The mean of the normal distribution that will be used to pick the target number of counts for downsample.
 #' @param visium_sd The standard deviation of the normal distribution that will be used to pick the target number of counts for downsample.
+#' @param n_cells_min Integer indicating the minimum number of cells sampled per spot. Default: 2
+#' @param n_cells_max  Integer indicating the maximum number of cells sampled per spot. Default: 10
 #' @param add_mock_region If you want to make a "mock region" in addition to the other regions, set this parameter to TRUE. Mock region is recommended when the synthetic data will be used to evaluate spatial/region annotation of cells, not when evaluating deconvolution tools. Default: FALSE. The mock region is generated similar as the real regions, but the input cell type frequencies are the same for each cell type, and after generation of the counts, the gene names are shuffled such that cellular identities in this mockregion are lost.
-#'
 #'
 #' @return list with five sublists: \cr
 #' counts: count matrix of the synthetic visium data \cr
@@ -743,7 +744,8 @@ make_region_celltype_assignment = function(seurat_obj, clust_var, n_regions, dat
 #'
 #' @export
 #'
-region_assignment_to_syn_data = function(region_assignment_list, seurat_obj, clust_var, visium_mean = 20000, visium_sd = 7000, add_mock_region = FALSE){
+region_assignment_to_syn_data = function(region_assignment_list, seurat_obj, clust_var, visium_mean = 20000, visium_sd = 7000,
+                                         n_cells_min = 2, n_cells_max = 10, add_mock_region = FALSE){
 
   requireNamespace("dplyr")
   requireNamespace("Seurat")
@@ -788,7 +790,8 @@ region_assignment_to_syn_data = function(region_assignment_list, seurat_obj, clu
   }
 
   regions = names(region_assignments)
-  synthetic_regions = regions %>% lapply(generate_spots, region_assignments, seurat_obj, visium_mean, visium_sd, real_dataset)
+  synthetic_regions = regions %>% lapply(generate_spots, region_assignments, seurat_obj, visium_mean, visium_sd, 
+                                         n_cells_min, n_cells_max, real_dataset)
 
   if(add_mock_region == TRUE){   # possible to add the mock region here in the synthetic_regions thing
     mock_regions = "mockregion"
@@ -801,7 +804,8 @@ region_assignment_to_syn_data = function(region_assignment_list, seurat_obj, clu
     region_assignments_mock = list(region_assignments_mock_region)
     names(region_assignments_mock) = mock_regions
 
-    synthetic_regions_mock = mock_regions %>% lapply(generate_spots, region_assignments_mock, seurat_obj, visium_mean, visium_sd, real_dataset = FALSE)
+    synthetic_regions_mock = mock_regions %>% lapply(generate_spots, region_assignments_mock, seurat_obj, visium_mean, visium_sd,
+                                                     n_cells_min, n_cells_max, real_dataset = FALSE)
     # synthetic_regions_mock[[1]]$spot_composition %>% select(-name, -region) %>% apply(2,sum)
 
     # now shuffle the gene names at random
@@ -832,11 +836,11 @@ region_assignment_to_syn_data = function(region_assignment_list, seurat_obj, clu
 #' @title Generate the synthetic data of a spot from a prior region of interest.
 #'
 #' @description \code{generate_spots} Generate the synthetic data of a spot from a prior region of interest.
-#' To create a synthetic Visium spot, we will generate an artificial mixture of single cells (based on the assumption that a spot is a mixture of n cells (n between 2 and 10))
+#' To create a synthetic Visium spot, we will generate an artificial mixture of single cells (based on the assumption that a spot is a mixture of n cells)
 #' Cells from the input scRNAseq data will be sampled based on the provided cell type frequencies of the region of interest, and their counts will be summed.
 #' After summation of the counts, the counts will be downsampled to get a total number of counts per spot that is typical for a Visium dataset. This target number of counts will be determined by sampling from a Normal distribution with mean and SD provided by the user.
 #' @usage
-#' generate_spots(region_oi, region_assignments, seurat_obj, visium_mean = 20000, visium_sd = 7000, real_dataset = FALSE)
+#' generate_spots(region_oi, region_assignments, seurat_obj, visium_mean = 20000, visium_sd = 7000, n_cells_min = 2, n_cells_max = 10, real_dataset = FALSE)
 #'
 #' @inheritParams region_assignment_to_syn_data
 #' @inheritParams make_region_celltype_assignment
@@ -866,7 +870,8 @@ region_assignment_to_syn_data = function(region_assignment_list, seurat_obj, clu
 #'
 #' @export
 #'
-generate_spots = function(region_oi, region_assignments, seurat_obj, visium_mean = 20000, visium_sd = 7000, real_dataset = FALSE){
+generate_spots = function(region_oi, region_assignments, seurat_obj, visium_mean = 20000, visium_sd = 7000,
+                          n_cells_min = 2, n_cells_max = 10, real_dataset = FALSE){
 
   requireNamespace("dplyr")
   requireNamespace("dtplyr") # use dplyr commands with data.table speed
@@ -907,9 +912,9 @@ generate_spots = function(region_oi, region_assignments, seurat_obj, visium_mean
   # #print(celltype_freq)
   ds_spots = lapply(1:n, function(i){
 
-    # select between 2 and 10 cells randomly from the count matrix
+    # select between n_cells_min and n_cells_max cells (default: 2, 10) randomly from the count matrix
     # add here something that uses the cell type frequencies!
-    n_cells = sample(x = 2:10, size = 1)
+    n_cells = sample(x = n_cells_min:n_cells_max, size = 1)
 
     celltypes_pool = sample(x = names(celltype_freq), size =  n_cells, prob = celltype_freq, replace = T)
     celltypes_pool_table = celltypes_pool %>% table()
@@ -1000,14 +1005,14 @@ generate_spots = function(region_oi, region_assignments, seurat_obj, visium_mean
 #' @title Generate synthetic Visium/ST data from input scRNAseq data.
 #'
 #' @description \code{generate_synthetic_visium} This function generates synthetic Visium/ST data from input scRNAseq data. \cr
-#' To create synthetic Visium spots, we will generate an artificial mixture of single cells (based on the assumption that a spot is a mixture of n cells (n between 2 and 10)) \cr
+#' To create synthetic Visium spots, we will generate an artificial mixture of single cells (based on the assumption that a spot is a mixture of n cells \cr
 #' Cells from the input scRNAseq data will be sampled based on the provided cell type frequencies per region (such that each region has a different cellular composition), and their counts will be summed. \cr
 #' After summation of the counts, the counts will be downsampled to get a total number of counts per spot that is typical for a Visium dataset. This target number of counts will be determined by sampling from a Normal distribution with mean and SD provided by the user. \cr
 #' You can generate different 'tissue types' by changing the way the cell type frequencies are defined. Read the argument description of `dataset_type` for seeing the different tissue type options. \cr
 #' If your scRNAseq data object already provides information about the region/location a cell was sampled from, you could use this information as well to generate synthetic Visium data that will only pool cells together if they originate from the same region. \cr
 #'
 #' @usage
-#' generate_synthetic_visium(seurat_obj, dataset_type, clust_var, n_regions, region_var = NULL, dataset_id = "1", n_spots_min = 50, n_spots_max = 500, visium_mean = 20000, visium_sd = 7000, add_mock_region = FALSE, sc_rnaseq_path = NA)
+#' generate_synthetic_visium(seurat_obj, dataset_type, clust_var, n_regions, region_var = NULL, dataset_id = "1", n_spots_min = 50, n_spots_max = 500, visium_mean = 20000, visium_sd = 7000, n_cells_min = 2, n_cells_max = 10, add_mock_region = FALSE, sc_rnaseq_path = NA)
 #'
 #' @inheritParams make_region_celltype_assignment
 #' @inheritParams region_assignment_to_syn_data
@@ -1032,7 +1037,7 @@ generate_spots = function(region_oi, region_assignments, seurat_obj, visium_mean
 #'
 #' @export
 #'
-generate_synthetic_visium = function(seurat_obj, dataset_type, clust_var, n_regions, region_var = NULL, dataset_id = "1", n_spots_min = 50, n_spots_max = 500, visium_mean = 20000, visium_sd = 7000, add_mock_region = FALSE, sc_rnaseq_path = NA){
+generate_synthetic_visium = function(seurat_obj, dataset_type, clust_var, n_regions, region_var = NULL, dataset_id = "1", n_spots_min = 50, n_spots_max = 500, visium_mean = 20000, visium_sd = 7000, n_cells_min = 2, n_cells_max = 10, add_mock_region = FALSE, sc_rnaseq_path = NA){
 
   requireNamespace("dplyr")
   requireNamespace("Seurat")
@@ -1040,7 +1045,8 @@ generate_synthetic_visium = function(seurat_obj, dataset_type, clust_var, n_regi
   # input checks are implemented in the functions that are used here under the hood.
 
   region_assignment_list = make_region_celltype_assignment(seurat_obj = seurat_obj, clust_var = clust_var, n_regions = n_regions, dataset_type = dataset_type, region_var = region_var, dataset_id = dataset_id, n_spots_min = n_spots_min, n_spots_max = n_spots_max)
-  synthetic_visium_data = region_assignment_to_syn_data(region_assignment_list = region_assignment_list, seurat_obj = seurat_obj, clust_var = clust_var, visium_mean = visium_mean, visium_sd = visium_sd, add_mock_region = add_mock_region)
+  synthetic_visium_data = region_assignment_to_syn_data(region_assignment_list = region_assignment_list, seurat_obj = seurat_obj, clust_var = clust_var, visium_mean = visium_mean, visium_sd = visium_sd,
+                                                        n_cells_min = n_cells_min, n_cells_max = n_cells_max, add_mock_region = add_mock_region)
   synthetic_visium_data$sc_rnaseq_path = sc_rnaseq_path
   return(synthetic_visium_data)
 
@@ -1053,7 +1059,7 @@ generate_synthetic_visium = function(seurat_obj, dataset_type, clust_var, n_regi
 #' Because of this, there can only be 1 region. It is recommended to use single-nucleus RNA-seq data, as it has been shown to capture tissue compositions more accurately than scRNA-seq. \cr
 #'
 #' @usage
-#' generate_synthetic_visium_lite(seurat_obj, clust_var, dataset_id = "1", n_spots = 500, visium_mean = 20000, visium_sd = 7000, sc_rnaseq_path = NA)
+#' generate_synthetic_visium_lite(seurat_obj, clust_var, dataset_id = "1", n_spots = 500, visium_mean = 20000, visium_sd = 7000, n_cells_min = 2, n_cells_max = 10, sc_rnaseq_path = NA)
 #'
 #' @param seurat_obj The input scRNAseq data stored as Seurat object.
 #' @param clust_var Name of the meta data column in which the cell type label of interest is defined.
@@ -1062,7 +1068,9 @@ generate_synthetic_visium = function(seurat_obj, dataset_type, clust_var, n_regi
 #' @param sc_rnaseq_path NA or indication of the path to read in the scRNAseq that should be used to integratie with this synthetic visium data. Default: NA
 #' @param visium_mean The mean of the normal distribution that will be used to pick the target number of counts for downsample.
 #' @param visium_sd The standard deviation of the normal distribution that will be used to pick the target number of counts for downsample.
-#'
+#' @param n_cells_min Integer indicating the minimum number of cells sampled per spot. Default: 2
+#' @param n_cells_max  Integer indicating the maximum number of cells sampled per spot. Default: 10
+#' 
 #' @return list with six sublists: \cr
 #' counts: count matrix of the synthetic visium data \cr
 #' spot_composition: the cell type composition of each spot \cr
@@ -1082,7 +1090,8 @@ generate_synthetic_visium = function(seurat_obj, dataset_type, clust_var, n_regi
 #'
 #' @export
 #'
-generate_synthetic_visium_lite = function(seurat_obj, clust_var, dataset_id = "1", n_spots = 500, visium_mean = 20000, visium_sd = 7000, sc_rnaseq_path = NA){
+generate_synthetic_visium_lite = function(seurat_obj, clust_var, dataset_id = "1", n_spots = 500, visium_mean = 20000, visium_sd = 7000,
+                                          n_cells_min = 2, n_cells_max = 10, sc_rnaseq_path = NA){
   
   requireNamespace("dplyr")
   requireNamespace("Seurat")
@@ -1119,7 +1128,8 @@ generate_synthetic_visium_lite = function(seurat_obj, clust_var, dataset_id = "1
   
   # Same workflow as original generate_synthetic_visium function
   region_assignment_list = list(region_assignments = region_assignments, dataset_properties = properties_df, gold_standard_priorregion = gs)
-  synthetic_visium_data = region_assignment_to_syn_data(region_assignment_list = region_assignment_list, seurat_obj = seurat_obj, clust_var = clust_var, visium_mean = visium_mean, visium_sd = visium_sd)
+  synthetic_visium_data = region_assignment_to_syn_data(region_assignment_list = region_assignment_list, seurat_obj = seurat_obj, clust_var = clust_var, 
+                                                        visium_mean = visium_mean, visium_sd = visium_sd, n_cells_min = n_cells_min, n_cells_max = n_cells_max)
   synthetic_visium_data$sc_rnaseq_path = sc_rnaseq_path
   
   return(synthetic_visium_data)

@@ -4,7 +4,7 @@
 \alias{generate_synthetic_visium_lite}
 \title{Generate synthetic Visium/ST data from input scRNAseq data, using the cell type composition from the input as priors.}
 \usage{
-generate_synthetic_visium_lite(seurat_obj, clust_var, dataset_id = "1", n_spots = 500, visium_mean = 20000, visium_sd = 7000, sc_rnaseq_path = NA)
+generate_synthetic_visium_lite(seurat_obj, clust_var, dataset_id = "1", n_spots = 500, visium_mean = 20000, visium_sd = 7000, n_cells_min = 2, n_cells_max = 10, sc_rnaseq_path = NA)
 }
 \arguments{
 \item{seurat_obj}{The input scRNAseq data stored as Seurat object.}
@@ -18,6 +18,10 @@ generate_synthetic_visium_lite(seurat_obj, clust_var, dataset_id = "1", n_spots 
 \item{visium_mean}{The mean of the normal distribution that will be used to pick the target number of counts for downsample.}
 
 \item{visium_sd}{The standard deviation of the normal distribution that will be used to pick the target number of counts for downsample.}
+
+\item{n_cells_min}{Integer indicating the minimum number of cells sampled per spot. Default: 2}
+
+\item{n_cells_max}{Integer indicating the maximum number of cells sampled per spot. Default: 10}
 
 \item{sc_rnaseq_path}{NA or indication of the path to read in the scRNAseq that should be used to integratie with this synthetic visium data. Default: NA}
 }

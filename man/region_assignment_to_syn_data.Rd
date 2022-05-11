@@ -4,7 +4,7 @@
 \alias{region_assignment_to_syn_data}
 \title{Generate synthetic Visium/ST data from input scRNAseq data based on predefined cell type frequencies and number of spots.}
 \usage{
-region_assignment_to_syn_data(region_assignment_list, seurat_obj, clust_var, visium_mean = 20000, visium_sd = 7000, add_mock_region = FALSE)
+region_assignment_to_syn_data(region_assignment_list, seurat_obj, clust_var, visium_mean = 20000, visium_sd = 7000, n_cells_min = 2, n_cells_max = 10, add_mock_region = FALSE)
 }
 \arguments{
 \item{region_assignment_list}{Output of the function `make_region_celltype_assignment`}
@@ -16,6 +16,10 @@ region_assignment_to_syn_data(region_assignment_list, seurat_obj, clust_var, vis
 \item{visium_mean}{The mean of the normal distribution that will be used to pick the target number of counts for downsample.}
 
 \item{visium_sd}{The standard deviation of the normal distribution that will be used to pick the target number of counts for downsample.}
+
+\item{n_cells_min}{Integer indicating the minimum number of cells sampled per spot. Default: 2}
+
+\item{n_cells_max}{Integer indicating the maximum number of cells sampled per spot. Default: 10}
 
 \item{add_mock_region}{If you want to make a "mock region" in addition to the other regions, set this parameter to TRUE. Mock region is recommended when the synthetic data will be used to evaluate spatial/region annotation of cells, not when evaluating deconvolution tools. Default: FALSE. The mock region is generated similar as the real regions, but the input cell type frequencies are the same for each cell type, and after generation of the counts, the gene names are shuffled such that cellular identities in this mockregion are lost.}
 }

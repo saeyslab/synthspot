@@ -4,7 +4,7 @@
 \alias{generate_spots}
 \title{Generate the synthetic data of a spot from a prior region of interest.}
 \usage{
-generate_spots(region_oi, region_assignments, seurat_obj, visium_mean = 20000, visium_sd = 7000, real_dataset = FALSE)
+generate_spots(region_oi, region_assignments, seurat_obj, visium_mean = 20000, visium_sd = 7000, n_cells_min = 2, n_cells_max = 10, real_dataset = FALSE)
 }
 \arguments{
 \item{region_oi}{Name of the prior region of interest from which the spot data should be generated.}
@@ -17,6 +17,10 @@ generate_spots(region_oi, region_assignments, seurat_obj, visium_mean = 20000, v
 
 \item{visium_sd}{The standard deviation of the normal distribution that will be used to pick the target number of counts for downsample.}
 
+\item{n_cells_min}{Integer indicating the minimum number of cells sampled per spot. Default: 2}
+
+\item{n_cells_max}{Integer indicating the maximum number of cells sampled per spot. Default: 10}
+
 \item{real_dataset}{Logical vector indicating whether the synthetic dataset is based on sampling from 'real' regions. See the documentation of the `make_region_celltype_assignment` function for more information about the distinction between 'real' and 'artificial' synthetic datasets. Default: FALSE.}
 }
 \value{
@@ -24,7 +28,7 @@ A list with two sublists: the counts and the cell type composition of the spot.
 }
 \description{
 \code{generate_spots} Generate the synthetic data of a spot from a prior region of interest.
-To create a synthetic Visium spot, we will generate an artificial mixture of single cells (based on the assumption that a spot is a mixture of n cells (n between 2 and 10))
+To create a synthetic Visium spot, we will generate an artificial mixture of single cells (based on the assumption that a spot is a mixture of n cells)
 Cells from the input scRNAseq data will be sampled based on the provided cell type frequencies of the region of interest, and their counts will be summed.
 After summation of the counts, the counts will be downsampled to get a total number of counts per spot that is typical for a Visium dataset. This target number of counts will be determined by sampling from a Normal distribution with mean and SD provided by the user.
 }

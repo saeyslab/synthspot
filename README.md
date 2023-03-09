@@ -3,7 +3,7 @@
 rmarkdown::render("README.Rmd",output_format = "md_document")
 -->
 
-# synthvisium
+# synthspot
 
 <!-- badges: start -->
 
@@ -13,7 +13,7 @@ status](https://github.com/browaeysrobin/synthvisium/workflows/R-CMD-check-bioc/
 Status](https://codecov.io/gh/browaeysrobin/synthvisium/branch/master/graph/badge.svg?token=MIOIRFJDQN)](https://codecov.io/gh/browaeysrobin/synthvisium)
 <!-- badges: end -->
 
-**synthvisium: an R package to generate synthetic Visium-like spot data
+**synthspot: an R package to generate synthetic Visium-like spot data
 by generating artificial mixtures of cells from input scRNAseq data.**
 The goal of this package is to give users the possibilities to generate
 different types of synthetic data for evaluation of spot deconvolution
@@ -60,28 +60,28 @@ differences between scRNAseq and Visium data are not yet incorporated
 and that a region is just a group of spots and that a spatial
 information layer is lacking.
 
-## Installation of synthvisium
+## Installation of synthspot
 
 Installation depends on the number of dependencies that has already been
 installed on your pc, but should not take much time.
 
-You can install synthvisium (and required dependencies) from github
+You can install synthspot (and required dependencies) from github
 with:
 
     # install.packages("devtools")
     # install.packages("igraph", type = "binary") ### on Windows only, if problem with installing igraph
-    devtools::install_github("browaeysrobin/synthvisium")
+    devtools::install_github("saeyslab/synthspot")
 
-synthvisium has been tested on Windows, Mac and Linux (most recently
+synthspot has been tested on Windows, Mac and Linux (most recently
 tested R version: R 4.0.2)
 
-## Learning to use synthvisium
+## Learning to use synthspot
 
 In the following vignette, you can learn how to generate the synthetic
-data by synthvisium:
+data by synthspot:
 
 -   [Generating Visium-like spot data](vignettes/generate_syn_data.md):
-    `vignette("generate_syn_data", package="synthvisium")`
+    `vignette("generate_syn_data", package="synthspot")`
 
 In the next vignette, you can find a short demonstration of a basic
 analysis you can do on this synthetic Visium data. We also show how to
@@ -90,4 +90,4 @@ labels:
 
 -   [Analyzing synthetic Visium-like spot data for evaluating label
     transfer methods](vignettes/analyze_syn_data.md):
-    `vignette("analyze_syn_data", package="synthvisium")`
+    `vignette("analyze_syn_data", package="synthspot")`

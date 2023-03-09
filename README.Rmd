@@ -10,14 +10,14 @@ output:
 rmarkdown::render("README.Rmd",output_format = "md_document")
 -->
 
-# synthvisium
+# synthspot
 
 <!-- badges: start -->
 [![R build status](https://github.com/browaeysrobin/synthvisium/workflows/R-CMD-check-bioc/badge.svg)](https://github.com/browaeysrobin/synthvisium/actions)
 [![Coverage Status](https://codecov.io/gh/browaeysrobin/synthvisium/branch/master/graph/badge.svg?token=MIOIRFJDQN)](https://codecov.io/gh/browaeysrobin/synthvisium)
 <!-- badges: end -->
 
-**synthvisium: an R package to generate synthetic Visium-like spot data by generating artificial mixtures of cells from input scRNAseq data.** The goal of this package is to give users the possibilities to generate different types of synthetic data for evaluation of spot deconvolution and label transfer methods. Since these synthetic datasets just consist of spots/mixtures of cells without modeling spatial aspects, they cannot be used to evaluate methods that require a spatial component in the data.
+**synthspot: an R package to generate synthetic Visium-like spot data by generating artificial mixtures of cells from input scRNAseq data.** The goal of this package is to give users the possibilities to generate different types of synthetic data for evaluation of spot deconvolution and label transfer methods. Since these synthetic datasets just consist of spots/mixtures of cells without modeling spatial aspects, they cannot be used to evaluate methods that require a spatial component in the data.
 
 ## How does this synthetic data generator work?
 
@@ -29,28 +29,28 @@ Importantly, the sampling of cells from input scRNAseq data depends on ___a prio
 
 Current limitations of this generator are that potential technical differences between scRNAseq and Visium data are not yet incorporated and that a region is just a group of spots and that a spatial information layer is lacking.
 
-## Installation of synthvisium
+## Installation of synthspot
 
 Installation depends on the number of dependencies that has already been installed on your pc, but should not take much time.
 
-You can install synthvisium (and required dependencies) from github with:
+You can install synthspot (and required dependencies) from github with:
 
 ```{r gh-installation, eval = FALSE}
 # install.packages("devtools")
 # install.packages("igraph", type = "binary") ### on Windows only, if problem with installing igraph
-devtools::install_github("browaeysrobin/synthvisium")
+devtools::install_github("saeyslab/synthspot")
 ```
 
-synthvisium has been tested on Windows, Mac and Linux (most recently tested R version: R 4.0.2)
+synthspot has been tested on Windows, Mac and Linux (most recently tested R version: R 4.0.2)
 
-## Learning to use synthvisium
+## Learning to use synthspot
 
-In the following vignette, you can learn how to generate the synthetic data by synthvisium:
+In the following vignette, you can learn how to generate the synthetic data by synthspot:
 
-* [Generating Visium-like spot data](vignettes/generate_syn_data.md): `vignette("generate_syn_data", package="synthvisium")`
+* [Generating Visium-like spot data](vignettes/generate_syn_data.md): `vignette("generate_syn_data", package="synthspot")`
 
 In the next vignette, you can find a short demonstration of a basic analysis you can do on this synthetic Visium data. We also show how to do the label transfer and compare gold standard labels with predicted labels:
 
-* [Analyzing synthetic Visium-like spot data for evaluating label transfer methods](vignettes/analyze_syn_data.md): `vignette("analyze_syn_data", package="synthvisium")`
+* [Analyzing synthetic Visium-like spot data for evaluating label transfer methods](vignettes/analyze_syn_data.md): `vignette("analyze_syn_data", package="synthspot")`
 
 
